@@ -1,0 +1,2 @@
+charity-backend/ filter=lfs diff=lfs merge=lfs -text
+charity-frontend/ filter=lfs diff=lfs merge=lfs -text
