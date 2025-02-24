@@ -12,6 +12,44 @@ app.use(Cors())
 
 Mongoose.connect("mongodb+srv://safabeegum:mongodb24@cluster0.pbzbbey.mongodb.net/CharityApp?retryWrites=true&w=majority&appName=Cluster0")
 
+//Sign in
+app.post("/login",async(req,res) => {
+    let input = req.body 
+    let result = userModel.find({email:req.body.email}).then(
+        (items)=>{
+            if(items.length>0)
+            {
+                const passwordValidator = Bcrypt.compareSync(req.body.password, items[0].password)
+                if(passwordValidator)
+                {
+                    //create token start
+                    jwt.sign({email:req.body.email},"CharityApp",{expiresIn:"1d"},
+                        (error,token)=>{
+                            if (error) 
+                            {
+                                res.json({"status":"Error","error":error})
+                            } 
+                            else 
+                            {
+                                res.json({"status":"Success","token":token,"userId":items[0]._id})
+                            }
+                        }
+                    )
+                    //create token end
+                }
+                else
+                {
+                    res.json({"status":"Incorrect Password"})
+                }
+            }
+            else{
+                res.json({"status":"Invalid Email ID"})
+            }
+        }
+    )
+})
+
+//Register
 app.post("/register", async(req,res)=> {
     let input = req.body 
     //Hashed password
