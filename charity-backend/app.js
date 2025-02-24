@@ -4,6 +4,7 @@ const Cors = require("cors")
 const Bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const userModel = require("./models/users")
+const adminModel = require("./models/admin")
 
 let app = Express()
 
@@ -12,7 +13,17 @@ app.use(Cors())
 
 Mongoose.connect("mongodb+srv://safabeegum:mongodb24@cluster0.pbzbbey.mongodb.net/CharityApp?retryWrites=true&w=majority&appName=Cluster0")
 
-//Sign in
+//Admin Register
+app.post("/adminregister", (req, res) => {
+    let input = req.body;
+    let hashedPassword = Bcrypt.hashSync(input.password, 10)
+    input.password = hashedPassword
+    let result = new adminModel(input)
+    result.save();
+    res.json({ status: "Success" })
+  });
+
+//Login
 app.post("/login",async(req,res) => {
     let input = req.body 
     let result = userModel.find({email:req.body.email}).then(
