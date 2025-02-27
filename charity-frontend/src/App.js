@@ -8,6 +8,7 @@ import Nav from './components/Nav';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import AdminNavbar from './components/AdminNavbar';
+import ManageUsers from './components/ManageUsers';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path='/adminlogin' element={<AdminLogin/>}/>
         <Route path='/adminnavbar' element={<AdminNavbar/>}/>
         <Route path='/admindashboard' element={<AdminDashboard/>}/>
+        <Route path='/manageusers' element={<ManageUsers/>}/>
       </Routes>
       </BrowserRouter>
     </div>

@@ -38,13 +38,13 @@ const AdminLogin = () => {
                     )
                 } else {
                     let token = response.data.token;
-                    let userId = response.data.userId;
-                    console.log(userId);
+                    let adminId = response.data.adminId;
+                    console.log(adminId);
                     console.log(token);
 
-                    sessionStorage.setItem("userId",userId)
+                    sessionStorage.setItem("adminId",adminId)
                     sessionStorage.setItem("token",token)
-                    navigate("/adminhome")
+                    navigate("/admindashboard")
                 }
             })
             .catch((error) => {
