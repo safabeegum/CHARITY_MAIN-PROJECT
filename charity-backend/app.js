@@ -5,6 +5,7 @@ const Bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const userModel = require("./models/users")
 const adminModel = require("./models/admin")
+const socialworkersModel = require("./models/socialworkers")
 
 let app = Express()
 
@@ -119,6 +120,79 @@ app.post("/register", async(req,res)=> {
 
 })
 
+//Manage Users
+app.post("/manageusers", async (req, res) => {
+    let token = req.headers.token;
+  
+    if (!token) {
+      console.log("No token provided");
+      return res.status(401).json({ status: "Token is missing" });
+    }
+  
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+      if (error) {
+        console.log("JWT verification failed:", error.message);
+        return res.status(403).json({ status: "Invalid Token", error: error.message });
+      }
+  
+      console.log("Token is valid for:", decoded.email);
+  
+      try {
+        const users = await userModel.find();
+        console.log("Users retrieved successfully:", users.length);
+        res.json(users);
+      } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ status: "Error fetching users" });
+      }
+    })
+  })
+
+//Manage Social Workers
+app.post("/managesocialworkers", async(req,res)=> {
+    let input = req.body 
+    let check = await socialworkersModel.find({email:req.body.email})
+        if(check.length>0)
+        {
+            res.json({"status":"Email ID already exists"})
+        }
+        else
+        {
+            let result = new socialworkersModel(input)
+            await result.save()
+            res.json({"status":"Success"})
+        }
+
+})
+
+app.post("/retrievesocialworkers", async (req, res) => {
+    let token = req.headers.authorization?.split(" ")[1]; // ✅ Extract token from "Bearer <token>"
+  
+    if (!token) {
+      console.log("No token provided in headers");
+      return res.status(401).json({ status: "Token is missing" });
+    }
+  
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+      if (error) {
+        console.log("JWT verification failed:", error.message);
+        return res.status(403).json({ status: "Invalid Token", error: error.message });
+      }
+  
+      console.log("Token is valid for:", decoded.email);
+  
+      try {
+        const users = await socialworkersModel.find({}, "-password"); // Exclude password for security
+        console.log(`Retrieved ${users.length} social workers successfully.`);
+        return res.json(users);
+      } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ status: "Error fetching users", error: err.message });
+      }
+    });
+  });
+  
+  
 app.listen(3030, () =>{
     console.log("Server Started")
 })
