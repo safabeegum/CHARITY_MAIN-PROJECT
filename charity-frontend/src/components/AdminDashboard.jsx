@@ -20,7 +20,7 @@ const AdminDashboard = () => {
               <a className="nav-link text-dark fw-bold" href="/manageusers">MANAGE USERS</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link text-dark fw-bold" href="#family">MANAGE CHARITY ORGANIZATIONS</a>
+              <a className="nav-link text-dark fw-bold" href="/managesocialworkers">MANAGE SOCIAL WORKERS</a>
             </li>
             <li className="nav-item">
               <a className="nav-link text-dark fw-bold" href="#photos">VIEW REPORTS</a>

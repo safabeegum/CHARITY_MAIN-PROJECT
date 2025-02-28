@@ -50,7 +50,7 @@ const ManageUsers = () => {
         <AdminNavbar/>
         <div className="row">
           <div className="col col-12">
-            <h2 className="text-center my-3">MANAGE USERS</h2>
+            <h4 className="text-center my-3">MANAGE USERS</h4>
             {error ? (
               <div className="alert alert-danger">{error}</div>
             ) : (

@@ -24,7 +24,7 @@ const AdminNavbar = () => {
                   className="d-inline-block align-text-top"
                 />
                 
-                <a href="/adminhome" className="btn btn-info">ADMIN DASHBOARD</a>
+                <a href="/admindashboard" className="btn btn-info">ADMIN DASHBOARD</a>
                 
                 <button className="btn btn-danger ms-2" onClick={handleLogout}>LOGOUT</button>
               </div>
