@@ -44,7 +44,7 @@ const Login = () => {
 
                     sessionStorage.setItem("userId",userId)
                     sessionStorage.setItem("token",token)
-                    navigate("/userhome")
+                    navigate("/userdashboard")
                 }
             })
             .catch((error) => {

@@ -14,6 +14,7 @@ import SocialWorkersLogin from './components/SocialWorkersLogin';
 import SocialWorkersDashboard from './components/SocialWorkersDashboard';
 import SocialWorkersNavbar from './components/SocialWorkersNavbar';
 import UserDashboard from './components/UserDashboard';
+import UserNavbar from './components/UserNavbar';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path='/socialworkerslogin' element={<SocialWorkersLogin/>}/>
         <Route path='/socialworkersnavbar' element={<SocialWorkersNavbar/>}/>
         <Route path='/socialworkersdashboard' element={<SocialWorkersDashboard/>}/>
+        <Route path='/usernavbar' element={<UserNavbar/>}/>
         <Route path='/userdashboard' element={<UserDashboard/>}/>
         
       </Routes>
