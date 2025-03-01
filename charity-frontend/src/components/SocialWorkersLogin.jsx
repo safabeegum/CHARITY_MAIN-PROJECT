@@ -39,7 +39,7 @@ const SocialWorkersLogin = () => {
           sessionStorage.setItem("token", token);
 
           // Redirect to the dashboard
-          navigate("/socialworkerdashboard");
+          navigate("/socialworkersdashboard");
         }
       })
       .catch((error) => {
