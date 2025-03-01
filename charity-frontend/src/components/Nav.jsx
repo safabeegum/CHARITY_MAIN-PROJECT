@@ -10,7 +10,7 @@ const Nav = () => {
         <div class="container-fluid">
         <img src="https://static.vecteezy.com/system/resources/previews/043/197/284/non_2x/logo-illustration-of-hands-holding-a-heart-representing-charity-and-support-vector.jpg" alt="Logo" width="140" height="140" class="d-inline-block align-text-top"></img>
         
-        <a href="/" className="btn btn-dark">HOME</a>
+        <a href="/" className="btn btn-outline-dark">HOME</a>
         </div>
         </nav>
                 </div>

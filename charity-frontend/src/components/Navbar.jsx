@@ -9,9 +9,9 @@ const Navbar = () => {
                 <nav class="navbar navbar-expand-lg bg-tertiary ">     
         <div class="container-fluid">
         <img src="https://static.vecteezy.com/system/resources/previews/043/197/284/non_2x/logo-illustration-of-hands-holding-a-heart-representing-charity-and-support-vector.jpg" alt="Logo" width="140" height="140" class="d-inline-block align-text-top"></img>
-        <a href="/adminlogin" className="btn btn-danger">ADMIN LOGIN</a>
-        <a href="/socialworkerslogin" className="btn btn-warning">SOCIAL WORKER LOGIN</a>
-        <a href="/login" className="btn btn-success">USER LOGIN</a>
+        <a href="/adminlogin" className="btn btn-outline-danger">ADMIN LOGIN</a>
+        <a href="/socialworkerslogin" className="btn btn-outline-secondary">SOCIAL WORKER LOGIN</a>
+        <a href="/login" className="btn btn-outline-success">USER LOGIN</a>
         </div>
         </nav>
                 </div>

@@ -24,9 +24,9 @@ const UserNavbar = () => {
                   className="d-inline-block align-text-top"
                 />
                 
-                <a href="/socialworkersdashboard" className="btn btn-info">USER DASHBOARD</a>
+                <a href="/socialworkersdashboard" className="btn btn-outline-warning">USER DASHBOARD</a>
                 
-                <button className="btn btn-danger ms-2" onClick={handleLogout}>LOGOUT</button>
+                <button className="btn btn-info ms-2" onClick={handleLogout}>LOGOUT</button>
               </div>
             </nav>
           </div>

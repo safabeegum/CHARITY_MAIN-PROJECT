@@ -59,7 +59,7 @@ const AdminLogin = () => {
           <div className="row">
             <div className="col col-12 col-sm-12 col-md-12 col-lg-6 col-6 col-xl-6 col-xxl-6">
             <div class="card border-light mb-3">
-            <img src="https://img.freepik.com/free-vector/privacy-policy-concept-illustration_114360-7853.jpg" class="card-img-top" alt="..."></img>
+            <img src="https://static.vecteezy.com/system/resources/previews/016/900/444/non_2x/online-dating-app-login-illustration-valentine-s-day-love-match-mobile-leaves-gradient-character-illustration-vector.jpg" class="card-img-top" alt="..."></img>
             <div class="card-body">
             </div>
             </div>
@@ -71,7 +71,7 @@ const AdminLogin = () => {
             <div className="col col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-12">
             <div className="row g-3">
             <div className="col col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xl-12 col-xxl-12">
-            <br></br><br></br><br></br><br></br>
+            <br></br><br></br><br></br><br></br><br></br>
                 <label htmlFor="" className="form-label">EMAIL</label>
                 <input type="text" className="form-control" name='email' value={input.email} onChange={inputHandler} />
             </div>

@@ -60,7 +60,7 @@ const Login = () => {
           <div className="row">
             <div className="col col-12 col-sm-12 col-md-12 col-lg-6 col-6 col-xl-6 col-xxl-6">
             <div class="card border-light mb-3">
-            <img src="https://img.freepik.com/free-vector/login-concept-illustration_114360-757.jpg?t=st=1728673663~exp=1728677263~hmac=66c06bde83e250baedd0c959855a63b12a4f14cf90eeb976904f32b06757106d&w=740" class="card-img-top" alt="..."></img>
+            <img src="https://static.vecteezy.com/system/resources/previews/016/900/444/non_2x/online-dating-app-login-illustration-valentine-s-day-love-match-mobile-leaves-gradient-character-illustration-vector.jpg" class="card-img-top" alt="..."></img>
             <div class="card-body">
             </div>
             </div>
@@ -72,7 +72,7 @@ const Login = () => {
             <div className="col col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-12">
             <div className="row g-3">
             <div className="col col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xl-12 col-xxl-12">
-            <br></br><br></br><br></br><br></br>
+            <br></br><br></br><br></br><br></br><br></br>
                 <label htmlFor="" className="form-label">EMAIL ID</label>
                 <input type="text" className="form-control" name='email' value={input.email} onChange={inputHandler} />
             </div>

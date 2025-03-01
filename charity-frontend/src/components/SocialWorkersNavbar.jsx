@@ -24,9 +24,9 @@ const SocialWorkersNavbar = () => {
                   className="d-inline-block align-text-top"
                 />
                 
-                <a href="/socialworkersdashboard" className="btn btn-info">SOCIAL WORKERS DASHBOARD</a>
+                <a href="/socialworkersdashboard" className="btn btn-outline-warning">SOCIAL WORKERS DASHBOARD</a>
                 
-                <button className="btn btn-danger ms-2" onClick={handleLogout}>LOGOUT</button>
+                <button className="btn btn-info ms-2" onClick={handleLogout}>LOGOUT</button>
               </div>
             </nav>
           </div>

@@ -57,7 +57,7 @@ const SocialWorkersLogin = () => {
           <div className="col-lg-6">
             <div className="card border-light mb-3">
               <img
-                src="https://img.freepik.com/free-vector/privacy-policy-concept-illustration_114360-7853.jpg"
+                src="https://static.vecteezy.com/system/resources/previews/016/900/444/non_2x/online-dating-app-login-illustration-valentine-s-day-love-match-mobile-leaves-gradient-character-illustration-vector.jpg"
                 className="card-img-top"
                 alt="Login Illustration"
               />
@@ -69,7 +69,7 @@ const SocialWorkersLogin = () => {
           <div className="col-lg-6">
             <div className="card border-light mb-3">
               <div className="card-body">
-                <br></br><br></br><br></br>
+                <br></br><br></br><br></br><br></br>
 
                 <div className="row g-3">
                   <div className="col-12">

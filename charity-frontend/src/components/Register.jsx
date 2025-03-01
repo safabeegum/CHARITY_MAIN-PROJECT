@@ -99,10 +99,12 @@ const Register = () => {
                 <div className="row">
                     <div className="col-lg-6">
                         <div className="card border-light mb-3">
-                            <img src="https://img.freepik.com/free-vector/sign-up-concept-illustration_114360-7965.jpg" className="card-img-top" alt="Sign Up" />
+                            <img src="https://static.vecteezy.com/system/resources/previews/016/900/444/non_2x/online-dating-app-login-illustration-valentine-s-day-love-match-mobile-leaves-gradient-character-illustration-vector.jpg" className="card-img-top" alt="Sign Up" />
                         </div>
                     </div>
+                    
                     <div className="col-lg-6">
+                    <br></br>
                         <div className="card border-light mb-3">
                             <div className="row g-3">
                                 <div className="col-6">
