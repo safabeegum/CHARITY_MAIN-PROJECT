@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminNavbar from './components/AdminNavbar';
 import ManageUsers from './components/ManageUsers';
 import ManageSocialWorkers from './components/ManageSocialWorkers';
+import SocialWorkersLogin from './components/SocialWorkersLogin';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path='/adminnavbar' element={<AdminNavbar/>}/>
         <Route path='/admindashboard' element={<AdminDashboard/>}/>
         <Route path='/manageusers' element={<ManageUsers/>}/>
+        <Route path='/socialworkerslogin' element={<SocialWorkersLogin/>}/>
         <Route path='/managesocialworkers' element={<ManageSocialWorkers/>}/>
       </Routes>
       </BrowserRouter>
