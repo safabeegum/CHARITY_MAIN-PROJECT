@@ -148,6 +148,86 @@ app.post("/manageusers", async (req, res) => {
     })
   })
 
+//Social Workers Login
+
+app.post("/socialworkerslogin", async (req, res) => {
+    try {
+        let user = await socialworkersModel.findOne({ email: req.body.email });
+
+        if (!user) {
+            return res.json({ "status": "Invalid Email ID" });
+        }
+
+        let passwordMatches = false;
+
+        // Check if the stored password is hashed or plain text
+        if (user.password.startsWith("$2b$")) { // bcrypt hashed passwords start with "$2b$"
+            passwordMatches = bcrypt.compareSync(req.body.password, user.password);
+        } else {
+            passwordMatches = req.body.password === user.password;
+        }
+
+        if (passwordMatches) {
+            // Create token
+            jwt.sign(
+                { email: req.body.email }, 
+                "CharityApp", 
+                { expiresIn: "1d" }, 
+                (error, token) => {
+                    if (error) {
+                        res.json({ "status": "Error", "error": error });
+                    } else {
+                        res.json({ "status": "Success", "token": token, "userId": user._id });
+                    }
+                }
+            );
+        } else {
+            res.json({ "status": "Incorrect Password" });
+        }
+
+    } catch (error) {
+        res.json({ "status": "Error", "error": error.message });
+    }
+});
+
+// Route for Changing Password (Hashes the new password)
+app.post("/socialworkers/change-password", async (req, res) => {
+    const { userId, oldPassword, newPassword } = req.body;
+
+    try {
+        let user = await socialworkersModel.findById(userId);
+
+        if (!user) {
+            return res.json({ "status": "User Not Found" });
+        }
+
+        let passwordMatches = false;
+
+        // Check if the stored password is hashed or plain text
+        if (user.password.startsWith("$2b$")) {
+            passwordMatches = bcrypt.compareSync(oldPassword, user.password);
+        } else {
+            passwordMatches = oldPassword === user.password;
+        }
+
+        if (!passwordMatches) {
+            return res.json({ "status": "Incorrect Old Password" });
+        }
+
+        // Hash the new password
+        const hashedPassword = bcrypt.hashSync(newPassword, 10);
+
+        // Update the password in the database
+        await socialworkersModel.updateOne({ _id: userId }, { $set: { password: hashedPassword } });
+
+        res.json({ "status": "Password Changed Successfully" });
+
+    } catch (error) {
+        res.json({ "status": "Error", "error": error.message });
+    }
+});
+
+
 //Manage Social Workers
 app.post("/managesocialworkers", async(req,res)=> {
     let input = req.body 
@@ -166,7 +246,7 @@ app.post("/managesocialworkers", async(req,res)=> {
 })
 
 app.post("/retrievesocialworkers", async (req, res) => {
-    let token = req.headers.authorization?.split(" ")[1]; // ✅ Extract token from "Bearer <token>"
+    let token = req.headers.authorization?.split(" ")[1]; //  Extract token from "Bearer <token>"
   
     if (!token) {
       console.log("No token provided in headers");
