@@ -190,8 +190,8 @@ app.post("/socialworkerslogin", async (req, res) => {
     }
 });
 
-// Route for Changing Password (Hashes the new password)
-app.post("/socialworkers/change-password", async (req, res) => {
+/* Route for Changing Password (Hashes the new password)
+app.post("/changepassword", async (req, res) => {
     const { userId, oldPassword, newPassword } = req.body;
 
     try {
@@ -201,23 +201,12 @@ app.post("/socialworkers/change-password", async (req, res) => {
             return res.json({ "status": "User Not Found" });
         }
 
-        let passwordMatches = false;
-
-        // Check if the stored password is hashed or plain text
-        if (user.password.startsWith("$2b$")) {
-            passwordMatches = bcrypt.compareSync(oldPassword, user.password);
-        } else {
-            passwordMatches = oldPassword === user.password;
-        }
-
+        let passwordMatches = bcrypt.compareSync(oldPassword, user.password);
         if (!passwordMatches) {
             return res.json({ "status": "Incorrect Old Password" });
         }
 
-        // Hash the new password
         const hashedPassword = bcrypt.hashSync(newPassword, 10);
-
-        // Update the password in the database
         await socialworkersModel.updateOne({ _id: userId }, { $set: { password: hashedPassword } });
 
         res.json({ "status": "Password Changed Successfully" });
@@ -225,7 +214,7 @@ app.post("/socialworkers/change-password", async (req, res) => {
     } catch (error) {
         res.json({ "status": "Error", "error": error.message });
     }
-});
+});*/
 
 
 //Manage Social Workers
