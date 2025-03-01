@@ -13,6 +13,7 @@ import ManageSocialWorkers from './components/ManageSocialWorkers';
 import SocialWorkersLogin from './components/SocialWorkersLogin';
 import SocialWorkersDashboard from './components/SocialWorkersDashboard';
 import SocialWorkersNavbar from './components/SocialWorkersNavbar';
+import UserDashboard from './components/UserDashboard';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path='/socialworkerslogin' element={<SocialWorkersLogin/>}/>
         <Route path='/socialworkersnavbar' element={<SocialWorkersNavbar/>}/>
         <Route path='/socialworkersdashboard' element={<SocialWorkersDashboard/>}/>
+        <Route path='/userdashboard' element={<UserDashboard/>}/>
         
       </Routes>
       </BrowserRouter>
