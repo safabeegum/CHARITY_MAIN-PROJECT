@@ -17,10 +17,10 @@ const SocialWorkersDashboard = () => {
               <a className="nav-link text-dark fw-bold " href="#home">HOME</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link text-dark fw-bold" href="/manageusers">CHANGE PASSWORD</a>
+              <a className="nav-link text-dark fw-bold" href="#">CHANGE PASSWORD</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link text-dark fw-bold" href="/managesocialworkers">MANAGE POSTS</a>
+              <a className="nav-link text-dark fw-bold" href="#">MANAGE POSTS</a>
             </li>
             <li className="nav-item">
               <a className="nav-link text-dark fw-bold" href="#photos">VIEW REPORTS</a>
