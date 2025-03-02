@@ -17,13 +17,16 @@ const UserDashboard = () => {
               <a className="nav-link text-dark fw-bold " href="#home">HOME</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link text-dark fw-bold " href="#home">PLAY GAME</a>
+              <a className="nav-link text-dark fw-bold " href="/gameindex">GAME CORNER</a>
             </li>
             <li className="nav-item">
               <a className="nav-link text-dark fw-bold" href="#">MAKE PAYMENT</a>
             </li>
             <li className="nav-item">
               <a className="nav-link text-dark fw-bold" href="#">VIEW TRANSACTIONS</a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link text-dark fw-bold" href="#photos">POST A REVIEW</a>
             </li>
             <li className="nav-item">
               <a className="nav-link text-dark fw-bold" href="#photos">EDIT PROFILE</a>

@@ -15,6 +15,7 @@ import SocialWorkersDashboard from './components/SocialWorkersDashboard';
 import SocialWorkersNavbar from './components/SocialWorkersNavbar';
 import UserDashboard from './components/UserDashboard';
 import UserNavbar from './components/UserNavbar';
+import GameIndex from './components/GameIndex';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path='/socialworkersdashboard' element={<SocialWorkersDashboard/>}/>
         <Route path='/usernavbar' element={<UserNavbar/>}/>
         <Route path='/userdashboard' element={<UserDashboard/>}/>
+        <Route path='/gameindex' element={<GameIndex/>}/>
         
       </Routes>
       </BrowserRouter>
