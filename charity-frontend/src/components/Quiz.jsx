@@ -59,13 +59,51 @@ const Quiz = () => {
     setIsFinished(false);
   };
 
+  // Styles with a dark gradient background
+  const styles = {
+    container: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "100vh",
+      background: "linear-gradient(to bottom, #000000, #1a1a1a, #333333)",
+      color: "white",
+      padding: "20px",
+    },
+    card: {
+      maxWidth: "600px",
+      width: "100%",
+      backgroundColor: "#222",
+      padding: "25px",
+      borderRadius: "10px",
+      boxShadow: "0 0 15px rgba(255, 255, 255, 0.2)",
+      color: "white",
+    },
+    button: {
+      marginTop: "10px",
+    },
+    progressBar: {
+      height: "10px",
+      backgroundColor: "#444",
+      borderRadius: "5px",
+      overflow: "hidden",
+    },
+    progressFill: (progress) => ({
+      width: `${progress}%`,
+      height: "100%",
+      backgroundColor: "#28a745",
+      transition: "width 0.5s ease-in-out",
+    }),
+  };
+
   return (
-    <div className="container d-flex flex-column align-items-center justify-content-center min-vh-100 bg-light">
+    <div style={styles.container}>
       {isFinished && <Confetti />}
       <a href="/gameindex" className="btn btn-dark">BACK TO GAME CORNER</a>
-      <br></br>
-      <div className="card shadow-lg p-4 w-100" style={{ maxWidth: "600px" }}>
-        <h1 className="text-center text-secondary mb-3">Quiz Application 🎯</h1>
+      <br />
+      <div style={styles.card}>
+        <h1 className="text-center mb-3">Quiz Application 🎯</h1>
 
         {isFinished ? (
           <div className="text-center">
@@ -73,10 +111,7 @@ const Quiz = () => {
             <p className="fs-5">
               Your final score: <strong>{score} / {questions.length}</strong>
             </p>
-            <button
-              onClick={handleRestart}
-              className="btn btn-danger btn-lg mt-3"
-            >
+            <button onClick={handleRestart} className="btn btn-danger btn-lg mt-3">
               Restart Quiz 🔄
             </button>
           </div>
@@ -102,6 +137,7 @@ const Quiz = () => {
               onClick={handleSubmitAnswer}
               disabled={!userAnswer}
               className="btn btn-success btn-lg w-100 mt-4"
+              style={styles.button}
             >
               Submit Answer ✅
             </button>
@@ -113,24 +149,17 @@ const Quiz = () => {
             <p className="text-center mb-1">
               <strong>Question {currentQuestionIndex + 1} of {questions.length}</strong>
             </p>
-            <div className="progress">
-              <div
-                className="progress-bar bg-success"
-                role="progressbar"
-                style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
-              ></div>
+            <div style={styles.progressBar}>
+              <div style={styles.progressFill(((currentQuestionIndex + 1) / questions.length) * 100)} />
             </div>
 
             <p className="text-center mt-2 fs-5">
               Score: <strong className="text-danger">{score}</strong>
             </p>
-            
           </div>
-          
         )}
       </div>
     </div>
-    
   );
 };
 

@@ -17,6 +17,7 @@ import UserDashboard from './components/UserDashboard';
 import UserNavbar from './components/UserNavbar';
 import GameIndex from './components/GameIndex';
 import Quiz from './components/Quiz';
+import GuessTheNumber from './components/GuessTheNumber';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
         <Route path='/userdashboard' element={<UserDashboard/>}/>
         <Route path='/gameindex' element={<GameIndex/>}/>
         <Route path='/quiz' element={<Quiz/>}/>
+        <Route path='/guessthenumber' element={<GuessTheNumber/>}/>
         
       </Routes>
       </BrowserRouter>
