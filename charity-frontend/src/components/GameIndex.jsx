@@ -70,6 +70,18 @@ const GameIndex = () => {
     },
   };
 
+  // List of games with their corresponding paths
+  const games = [
+    { name: "QUIZ", path: "/quiz" },
+    { name: "GUESS THE NUMBER", path: "/guess-the-number" },
+    { name: "TIC TAC TOE", path: "/tic-tac-toe" },
+    { name: "SNAKE GAME", path: "/snake-game" },
+    { name: "HANG MAN", path: "/hang-man" },
+    { name: "ADULT PICTIONARY", path: "/adult-pictionary" },
+    { name: "TRUTH/DARE", path: "/truth-or-dare" },
+    { name: "NEVER HAVE I EVER", path: "/never-have-i-ever" },
+  ];
+
   return (
     <>
       <div style={styles.indexMain}>
