@@ -73,7 +73,7 @@ const GameIndex = () => {
         "GUESS THE NUMBER": "/guessthenumber",
         "TIC TAC TOE": "/tictactoe",
         "SNAKE GAME": "/snakegame",
-        "HANG MAN": "/hang-man",
+        "HANG MAN": "/hangman",
         "ADULT PICTIONARY": "/adult-pictionary",
         "TRUTH/DARE": "/truth-or-dare",
         "NEVER HAVE I EVER": "/never-have-i-ever"

@@ -20,6 +20,7 @@ import Quiz from './components/Quiz';
 import GuessTheNumber from './components/GuessTheNumber';
 import TicTacToe from './components/TicTacToe';
 import SnakeGame from './components/SnakeGame';
+import Hangman from './components/Hangman';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
         <Route path='/guessthenumber' element={<GuessTheNumber/>}/>
         <Route path='/tictactoe' element={<TicTacToe/>}/>
         <Route path='/snakegame' element={<SnakeGame/>}/>
+        <Route path='/hangman' element={<Hangman/>}/>
         
       </Routes>
       </BrowserRouter>
