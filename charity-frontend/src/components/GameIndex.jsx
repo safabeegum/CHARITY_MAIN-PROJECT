@@ -71,7 +71,7 @@ const GameIndex = () => {
     const gameRoutes = {
         "QUIZ": "/quiz",
         "GUESS THE NUMBER": "/guessthenumber",
-        "TIC TAC TOE": "/tic-tac-toe",
+        "TIC TAC TOE": "/tictactoe",
         "SNAKE GAME": "/snake-game",
         "HANG MAN": "/hang-man",
         "ADULT PICTIONARY": "/adult-pictionary",

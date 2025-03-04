@@ -18,6 +18,7 @@ import UserNavbar from './components/UserNavbar';
 import GameIndex from './components/GameIndex';
 import Quiz from './components/Quiz';
 import GuessTheNumber from './components/GuessTheNumber';
+import TicTacToe from './components/TicTacToe';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
         <Route path='/gameindex' element={<GameIndex/>}/>
         <Route path='/quiz' element={<Quiz/>}/>
         <Route path='/guessthenumber' element={<GuessTheNumber/>}/>
+        <Route path='/tictactoe' element={<TicTacToe/>}/>
         
       </Routes>
       </BrowserRouter>
