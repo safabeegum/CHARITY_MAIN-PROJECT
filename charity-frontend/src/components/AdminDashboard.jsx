@@ -25,6 +25,9 @@ const AdminDashboard = () => {
             <li className="nav-item">
               <a className="nav-link text-dark fw-bold" href="#photos">VIEW REPORTS</a>
             </li>
+            <li className="nav-item">
+              <a className="nav-link text-dark fw-bold" href="/managereview">MANAGE REVIEWS</a>
+            </li>
           </ul>
           <br />
         </div>

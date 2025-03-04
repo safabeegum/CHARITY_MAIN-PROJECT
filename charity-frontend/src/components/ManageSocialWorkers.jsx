@@ -130,7 +130,7 @@ const ManageSocialWorkers = () => {
               width: "600px",
             }}
           >
-            <h2 style={{ textAlign: "center" }}>Add Social Workers</h2>
+            <h2 style={{ textAlign: "center" }}>ADD SOCIAL WORKERS</h2>
             <form onSubmit={handleSubmit}>
               <input
                 type="text"
