@@ -19,6 +19,7 @@ import GameIndex from './components/GameIndex';
 import Quiz from './components/Quiz';
 import GuessTheNumber from './components/GuessTheNumber';
 import TicTacToe from './components/TicTacToe';
+import SnakeGame from './components/SnakeGame';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
         <Route path='/quiz' element={<Quiz/>}/>
         <Route path='/guessthenumber' element={<GuessTheNumber/>}/>
         <Route path='/tictactoe' element={<TicTacToe/>}/>
+        <Route path='/snakegame' element={<SnakeGame/>}/>
         
       </Routes>
       </BrowserRouter>
