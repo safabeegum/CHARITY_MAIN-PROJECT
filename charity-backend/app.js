@@ -151,6 +151,34 @@ app.post("/manageusers", async (req, res) => {
 
 
 //Post a Review 
+
+app.post("/manageusers", async (req, res) => {
+    let token = req.headers.token;
+  
+    if (!token) {
+      console.log("No token provided");
+      return res.status(401).json({ status: "Token is missing" });
+    }
+  
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+      if (error) {
+        console.log("JWT verification failed:", error.message);
+        return res.status(403).json({ status: "Invalid Token", error: error.message });
+      }
+  
+      console.log("Token is valid for:", decoded.email);
+  
+      try {
+        const users = await userModel.find();
+        console.log("Users retrieved successfully:", users.length);
+        res.json(users);
+      } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ status: "Error fetching users" });
+      }
+    })
+  })
+
 app.post("/review", async (req, res) => {
     let { review, rating } = req.body;
     let token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
@@ -186,7 +214,35 @@ app.post("/review", async (req, res) => {
     }
 });
 
+//Manage Review
+
+app.post("/managereview", async (req, res) => {
+    let token = req.headers.token;
   
+    if (!token) {
+      console.log("No token provided");
+      return res.status(401).json({ status: "Token is missing" });
+    }
+  
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+      if (error) {
+        console.log("JWT verification failed:", error.message);
+        return res.status(403).json({ status: "Invalid Token", error: error.message });
+      }
+  
+      console.log("Token is valid for:", decoded.email);
+  
+      try {
+        const review = await reviewModel.find();
+        console.log("Review retrieved successfully:", review.length);
+        res.json(review);
+      } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ status: "Error fetching review" });
+      }
+    })
+  })
+
 
 //Social Workers Login
 
