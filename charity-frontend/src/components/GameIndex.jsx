@@ -74,9 +74,6 @@ const GameIndex = () => {
         "TIC TAC TOE": "/tictactoe",
         "SNAKE GAME": "/snakegame",
         "HANG MAN": "/hangman",
-        "ADULT PICTIONARY": "/adult-pictionary",
-        "TRUTH/DARE": "/truth-or-dare",
-        "NEVER HAVE I EVER": "/never-have-i-ever"
     };
 
     return (

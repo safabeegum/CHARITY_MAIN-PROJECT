@@ -197,12 +197,12 @@ const styles = {
     marginBottom: "15px",
   },
   gameContainer: {
-    backgroundColor: "purple", // Purple box
+    backgroundColor: "linear-gradient(to right, #0a0a1a, #14142b, #1e1e3f)", 
     padding: "20px",
     borderRadius: "10px",
     boxShadow: "0 0 15px rgba(255, 255, 255, 0.2)",
     textAlign: "center",
-    color: "violet",
+    color: "white",
   },
   board: {
     display: "grid",

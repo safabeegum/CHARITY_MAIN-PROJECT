@@ -21,6 +21,7 @@ import GuessTheNumber from './components/GuessTheNumber';
 import TicTacToe from './components/TicTacToe';
 import SnakeGame from './components/SnakeGame';
 import Hangman from './components/Hangman';
+import Review from './components/Review';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
         <Route path='/usernavbar' element={<UserNavbar/>}/>
         <Route path='/userdashboard' element={<UserDashboard/>}/>
         <Route path='/gameindex' element={<GameIndex/>}/>
+        <Route path='/review' element={<Review/>}/>
         <Route path='/quiz' element={<Quiz/>}/>
         <Route path='/guessthenumber' element={<GuessTheNumber/>}/>
         <Route path='/tictactoe' element={<TicTacToe/>}/>
