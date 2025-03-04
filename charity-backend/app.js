@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken")
 const userModel = require("./models/users")
 const adminModel = require("./models/admin")
 const socialworkersModel = require("./models/socialworkers")
+const reviewModel = require("./models/review")
 
 let app = Express()
 
@@ -147,6 +148,45 @@ app.post("/manageusers", async (req, res) => {
       }
     })
   })
+
+
+//Post a Review 
+app.post("/review", async (req, res) => {
+    let { review, rating } = req.body;
+    let token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
+
+    if (!review || review.trim() === "") {
+        return res.status(400).json({ status: "Error", message: "Review is required" });
+    }
+    if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ status: "Error", message: "Rating must be between 1 and 5" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, "CharityApp");
+        const user = await userModel.findOne({ email: decoded.email });
+
+        if (!user) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+
+        let newReview = new reviewModel({
+            userId: user._id,
+            review,
+            rating,
+            email: user.email
+        });
+
+        await newReview.save();
+        res.status(201).json({ status: "Success", message: "Review submitted successfully" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(401).json({ status: "Error", message: "Invalid Token" });
+    }
+});
+
+  
 
 //Social Workers Login
 
