@@ -29,7 +29,7 @@ const UserDashboard = () => {
               <a className="nav-link text-dark fw-bold" href="/review">POST A REVIEW</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link text-dark fw-bold" href="#photos">EDIT PROFILE</a>
+              <a className="nav-link text-dark fw-bold" href="myprofile">MY PROFILE</a>
             </li>
           </ul>
           <br />

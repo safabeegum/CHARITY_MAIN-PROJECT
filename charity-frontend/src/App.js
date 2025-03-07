@@ -23,6 +23,8 @@ import SnakeGame from './components/SnakeGame';
 import Hangman from './components/Hangman';
 import Review from './components/Review';
 import ManageReview from './components/ManageReview';
+import MyProfile from './components/MyProfile';
+import EditProfileModal from './components/EditProfileModal';
 
 function App() {
   return (
@@ -47,6 +49,8 @@ function App() {
         <Route path='/gameindex' element={<GameIndex/>}/>
         <Route path='/review' element={<Review/>}/>
         <Route path='/managereview' element={<ManageReview/>}/>
+        <Route path='/myprofile' element={<MyProfile/>}/>
+        <Route path='/editprofilemodal' element={<EditProfileModal/>}/>
         <Route path='/quiz' element={<Quiz/>}/>
         <Route path='/guessthenumber' element={<GuessTheNumber/>}/>
         <Route path='/tictactoe' element={<TicTacToe/>}/>
