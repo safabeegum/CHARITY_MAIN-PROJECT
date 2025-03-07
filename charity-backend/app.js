@@ -99,6 +99,64 @@ app.post("/login",async(req,res) => {
     )
 })
 
+
+//Admin Dashboard
+
+app.post("/api/admindashboard", async (req, res) => {
+    try {
+        // Fetching statistics
+        const usersCount = await userModel.countDocuments();
+        const socialWorkersCount = await socialworkersModel.countDocuments();
+        const reportsCount = await reviewModel.countDocuments(); // Assuming reports are stored in reviewModel
+        const feedbackCount = await reviewModel.countDocuments(); // Assuming feedback is stored in reviewModel
+
+        res.json({
+            users: usersCount,
+            socialWorkers: socialWorkersCount,
+            reports: reportsCount,
+            feedback: feedbackCount
+        });
+
+    } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+        res.status(500).json({ status: "Error", message: "Failed to fetch dashboard stats" });
+    }
+});
+
+
+//User Activity
+app.post("/api/useractivity", async (req, res) => {
+    try {
+        const last7Days = new Date();
+        last7Days.setDate(last7Days.getDate() - 7);
+
+        const activity = await userModel.aggregate([
+            {
+                $match: { createdAt: { $gte: last7Days } } // Ensure createdAt is present
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, // Format date
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        console.log("User Activity Data:", activity); // Debugging: Check if data is retrieved
+
+        res.json(activity.length > 0 ? activity.map(item => ({ date: item._id, count: item.count })) : []);
+
+    } catch (error) {
+        console.error("Error fetching user activity:", error);
+        res.status(500).json({ status: "Error", message: "Failed to fetch user activity" });
+    }
+});
+
+
+
 //Register
 app.post("/register", async(req,res)=> {
     let input = req.body 
@@ -215,7 +273,6 @@ app.post("/review", async (req, res) => {
 });
 
 //Manage Review
-
 app.post("/managereview", async (req, res) => {
     let token = req.headers.token;
   
@@ -242,6 +299,80 @@ app.post("/managereview", async (req, res) => {
       }
     })
   })
+
+
+// My Profile
+app.post("/myprofile", async (req, res) => {
+    let token = req.headers.token;
+
+    if (!token) {
+        console.log("No token provided");
+        return res.status(401).json({ status: "Token is missing" });
+    }
+
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+        if (error) {
+            console.log("JWT verification failed:", error.message);
+            return res.status(403).json({ status: "Invalid Token", error: error.message });
+        }
+
+        console.log("Fetching profile for:", decoded.email);
+
+        try {
+            const user = await userModel.findOne({ email: decoded.email });
+            if (!user) {
+                return res.status(404).json({ status: "User not found" });
+            }
+
+            console.log("User profile retrieved:", user);
+            res.json(user);
+        } catch (err) {
+            console.error("Database error:", err);
+            res.status(500).json({ status: "Error fetching user profile" });
+        }
+    });
+});
+
+
+//EditProfile Modal
+
+app.put("/editprofilemodal", async (req, res) => {
+    console.log("Received update request:", req.body);
+
+    let token = req.headers.token;
+    if (!token) {
+        console.log("No token provided");
+        return res.status(401).json({ status: "Token is missing" });
+    }
+
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+        if (error) {
+            console.log("JWT verification failed:", error.message);
+            return res.status(403).json({ status: "Invalid Token", error: error.message });
+        }
+
+        console.log("Updating profile for:", decoded.email);
+
+        try {
+            const updatedUser = await userModel.findOneAndUpdate(
+                { email: decoded.email },  // Find user by email
+                { $set: req.body },         // Update user with new data
+                { new: true }               // Return updated document
+            );
+
+            if (!updatedUser) {
+                console.log("User not found");
+                return res.status(404).json({ status: "User not found" });
+            }
+
+            console.log("Profile updated successfully:", updatedUser);
+            res.json({ status: "Success", user: updatedUser });
+        } catch (err) {
+            console.error("Database error:", err);
+            res.status(500).json({ status: "Error updating profile" });
+        }
+    });
+});
 
 
 //Social Workers Login
