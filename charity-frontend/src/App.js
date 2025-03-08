@@ -25,6 +25,8 @@ import Review from './components/Review';
 import ManageReview from './components/ManageReview';
 import MyProfile from './components/MyProfile';
 import EditProfileModal from './components/EditProfileModal';
+import MakePayment from './components/MakePayment';
+import PaymentDetails from './components/PaymentDetails';
 
 function App() {
   return (
@@ -47,6 +49,10 @@ function App() {
         <Route path='/usernavbar' element={<UserNavbar/>}/>
         <Route path='/userdashboard' element={<UserDashboard/>}/>
         <Route path='/gameindex' element={<GameIndex/>}/>
+        <Route path='/makepayment' element={<MakePayment/>}/>
+        <Route path='/paymentdetails' element={<PaymentDetails/>}/>
+        <Route path="/paymentdetails/:method/:amount" element={<PaymentDetails />} />
+        <Route path="/success" element={<h2>Payment Successful!</h2>} />
         <Route path='/review' element={<Review/>}/>
         <Route path='/managereview' element={<ManageReview/>}/>
         <Route path='/myprofile' element={<MyProfile/>}/>
