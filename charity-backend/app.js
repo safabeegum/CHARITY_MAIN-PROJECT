@@ -3,6 +3,9 @@ const Mongoose = require("mongoose");
 const Cors = require("cors");
 const Bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const nodemailer = require('nodemailer');
+const fs = require('fs');
 
 const userModel = require("./models/users");
 const adminModel = require("./models/admin");
@@ -493,8 +496,8 @@ app.post("/retrievesocialworkers", async (req, res) => {
     });
   });
 
-
-//Make Payment
+  
+  // Make Payment
 
 app.post("/makepayment", async (req, res) => {
     let { amount, method } = req.body;
@@ -524,7 +527,6 @@ app.post("/makepayment", async (req, res) => {
 });
 
 //Process Payment
-
 app.post("/processpayment", async (req, res) => {
     let { paymentId } = req.body;
     let token = req.headers.authorization?.split(" ")[1];
@@ -540,10 +542,63 @@ app.post("/processpayment", async (req, res) => {
         const payment = await paymentModel.findById(paymentId);
         if (!payment) return res.status(404).json({ status: "Error", message: "Payment not found" });
 
-        payment.status = "success"; // Mark payment as "success"
+        // ✅ Mark Payment As Success
+        payment.status = "success";
         await payment.save();
 
-        res.json({ status: "Success", message: "Payment recorded successfully" });
+        // ✅ NOW GENERATE PDF IN-MEMORY WITHOUT STORING 💯🔥
+        const pdfDoc = await PDFDocument.create();
+        const page = pdfDoc.addPage([600, 400]);
+
+        const { width, height } = page.getSize();
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+        page.setFont(font);
+
+        // ✅ Add Receipt Heading
+        page.drawText('Payment Receipt', { x: 220, y: height - 50, size: 20 });
+
+        // ✅ Add Payment Details
+        page.drawText(`Transaction ID: ${payment._id}`, { x: 50, y: height - 100 });
+        page.drawText(`Amount Paid: Rs. ${payment.amount}`, { x: 50, y: height - 130 });  // 👈 Removed ₹ Symbol
+        page.drawText(`Payment Method: ${payment.method}`, { x: 50, y: height - 160 });
+        page.drawText(`Payment Status: ${payment.status}`, { x: 50, y: height - 190 });
+        page.drawText(`Date & Time: ${new Date(payment.createdAt).toLocaleString()}`, { x: 50, y: height - 220 });
+
+        // ✅ Save PDF Buffer
+        const pdfBytes = await pdfDoc.save();
+
+        // ✅ SEND EMAIL WITH PDF ATTACHMENT 💣🔥
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'charityapp2025',
+                pass: 'zagp exnp ujys fmef'
+            }
+        });
+
+        const mailOptions = {
+            from: 'charityapp2025',
+            to: user.email,
+            subject: 'Payment Receipt',
+            text: 'Thank you for your payment. Please find the attached receipt.',
+            attachments: [
+                {
+                    filename: `Receipt_${payment._id}.pdf`,
+                    content: pdfBytes,
+                    encoding: 'base64'
+                }
+            ]
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error("❌ Error sending email:", error);
+                return res.status(500).json({ status: "Error", message: "Failed to send email" });
+            }
+            console.log("✅ Email sent:", info.response);
+            res.json({ status: "Success", message: "Payment successful and receipt sent!" });
+        });
 
     } catch (error) {
         console.error(error);
@@ -552,11 +607,71 @@ app.post("/processpayment", async (req, res) => {
 });
 
 
-//Transactions
-app.get("/transactions", async (req, res) => {
+
+
+// ✅ 2. DOWNLOAD RECEIPT API 🚀💯🔥
+app.post("/downloadreceipt", async (req, res) => {
+    let { paymentId } = req.body;
     let token = req.headers.authorization?.split(" ")[1];
 
-    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+    if (!token) return res.status(401).send("Token Missing!");
+
+    try {
+        // ✅ Verify token
+        const decoded = jwt.verify(token, "CharityApp");
+        const user = await userModel.findOne({ email: decoded.email });
+
+        if (!user) return res.status(404).send("User Not Found");
+
+        // ✅ Find the payment
+        const payment = await paymentModel.findById(paymentId);
+        if (!payment) return res.status(404).send("Payment Not Found");
+
+        // ✅ Generate PDF in-memory
+        const pdfDoc = await PDFDocument.create();
+        const page = pdfDoc.addPage([600, 400]);
+        const { width, height } = page.getSize();
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+        // ✅ Add text to the PDF
+        const fontSize = 12;
+        page.drawText('Payment Receipt', {
+            x: 200,
+            y: height - 50,
+            size: 20,
+            font,
+            color: rgb(0, 0, 0)
+        });
+
+        page.drawText(`Transaction ID: ${payment._id}`, { x: 50, y: height - 100, size: fontSize, font });
+        page.drawText(`Amount Paid: INR ${payment.amount}`, { x: 50, y: height - 120, size: fontSize, font }); // Avoid ₹
+        page.drawText(`Payment Method: ${payment.method}`, { x: 50, y: height - 140, size: fontSize, font });
+        page.drawText(`Payment Status: ${payment.status}`, { x: 50, y: height - 160, size: fontSize, font });
+        page.drawText(`Date & Time: ${new Date(payment.createdAt).toLocaleString()}`, { x: 50, y: height - 180, size: fontSize, font });
+
+        // ✅ Convert PDF to Bytes
+        const pdfBytes = await pdfDoc.save();
+
+        // ✅ Send PDF to the user as a download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Receipt_${payment._id}.pdf`);
+        res.send(Buffer.from(pdfBytes));
+
+    } catch (error) {
+        console.error("Failed to download receipt:", error);
+        res.status(500).send("Failed to download receipt");
+    }
+});
+
+
+
+// ✅ GET USER PAYMENT HISTORY USING POST 💣🔥
+app.post("/getuserpayment", async (req, res) => {
+    let token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+        return res.status(401).json({ status: "Error", message: "Token is missing" });
+    }
 
     try {
         const decoded = jwt.verify(token, "CharityApp");
@@ -564,23 +679,14 @@ app.get("/transactions", async (req, res) => {
 
         if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
 
-        const transactions = await paymentModel.find({ userId: user._id });
-        res.json(transactions);
-
+        const payments = await paymentModel.find({ userId: user._id }).sort({ createdAt: -1 });
+        res.json(payments);
     } catch (error) {
-        res.status(500).json({ status: "Error", message: "Failed to fetch transactions" });
+        console.error(error);
+        res.status(500).json({ status: "Error", message: "Failed to fetch payments" });
     }
 });
 
-//Fetch Transactions
-app.get("/alltransactions", async (req, res) => {
-    try {
-        const transactions = await paymentModel.find();
-        res.json(transactions);
-    } catch (error) {
-        res.status(500).json({ status: "Error", message: "Failed to fetch transactions" });
-    }
-});
 
 
   
