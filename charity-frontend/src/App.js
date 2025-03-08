@@ -27,6 +27,7 @@ import MyProfile from './components/MyProfile';
 import EditProfileModal from './components/EditProfileModal';
 import MakePayment from './components/MakePayment';
 import PaymentDetails from './components/PaymentDetails';
+import PaymentHistory from './components/PaymentHistory';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
         <Route path='/gameindex' element={<GameIndex/>}/>
         <Route path='/makepayment' element={<MakePayment/>}/>
         <Route path='/paymentdetails' element={<PaymentDetails/>}/>
+        <Route path='/paymenthistory' element={<PaymentHistory/>}/>
         <Route path="/paymentdetails/:method/:amount" element={<PaymentDetails />} />
         <Route path="/success" element={<h2>Payment Successful!</h2>} />
         <Route path='/review' element={<Review/>}/>

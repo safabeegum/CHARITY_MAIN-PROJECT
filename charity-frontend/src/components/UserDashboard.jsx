@@ -19,7 +19,7 @@ const UserDashboard = () => {
               { href: "/userdashboard", icon: faHome, label: "HOME" },
               { href: "/gameindex", icon: faUsers, label: "GAME CORNER" },
               { href: "/makepayment", icon: faHandsHelping, label: "MAKE PAYMENT" },
-              { href: "/viewreports", icon: faFileAlt, label: "VIEW TRANSACTIONS" },
+              { href: "/paymenthistory", icon: faFileAlt, label: "PAYMENT HISTORY" },
               { href: "/review", icon: faComments, label: "POST A REVIEW" },
               { href: "/myprofile", icon: faComments, label: "MY PROFILE" }
             ].map((item, index) => (
