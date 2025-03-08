@@ -1,19 +1,24 @@
-const Express = require("express")
-const Mongoose = require("mongoose")
-const Cors = require("cors")
-const Bcrypt = require("bcrypt")
-const jwt = require("jsonwebtoken")
-const userModel = require("./models/users")
-const adminModel = require("./models/admin")
-const socialworkersModel = require("./models/socialworkers")
-const reviewModel = require("./models/review")
+const Express = require("express"); // Capitalized Express
+const Mongoose = require("mongoose");
+const Cors = require("cors");
+const Bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-let app = Express()
+const userModel = require("./models/users");
+const adminModel = require("./models/admin");
+const socialworkersModel = require("./models/socialworkers");
+const reviewModel = require("./models/review");
+const paymentModel = require("./models/payment");
 
-app.use(Express.json())
-app.use(Cors())
+let app = Express(); // Capitalized Express Initialization
+
+app.use(Express.json()); // Capitalized Express Middleware
+app.use(Cors()); // Capitalized Cors Middleware
 
 Mongoose.connect("mongodb+srv://safabeegum:mongodb24@cluster0.pbzbbey.mongodb.net/CharityApp?retryWrites=true&w=majority&appName=Cluster0")
+
+
+
 
 //Admin Login
 app.post("/adminlogin",async(req,res) => {
@@ -487,7 +492,97 @@ app.post("/retrievesocialworkers", async (req, res) => {
       }
     });
   });
-  
+
+
+//Make Payment
+
+app.post("/makepayment", async (req, res) => {
+    let { amount, method } = req.body;
+    let token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+
+    try {
+        const decoded = jwt.verify(token, "CharityApp");
+        const user = await userModel.findOne({ email: decoded.email });
+
+        if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+
+        const payment = new paymentModel({
+            userId: user._id,
+            amount,
+            method,
+            status: "pending",
+        });
+
+        await payment.save();
+        res.json({ status: "Success", message: "Payment initiated", paymentId: payment._id });
+
+    } catch (error) {
+        res.status(401).json({ status: "Error", message: "Invalid Token" });
+    }
+});
+
+//Process Payment
+
+app.post("/processpayment", async (req, res) => {
+    let { paymentId } = req.body;
+    let token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+
+    try {
+        const decoded = jwt.verify(token, "CharityApp");
+        const user = await userModel.findOne({ email: decoded.email });
+
+        if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+
+        const payment = await paymentModel.findById(paymentId);
+        if (!payment) return res.status(404).json({ status: "Error", message: "Payment not found" });
+
+        payment.status = "success"; // Mark payment as "success"
+        await payment.save();
+
+        res.json({ status: "Success", message: "Payment recorded successfully" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: "Error", message: "Payment failed", error: error.message });
+    }
+});
+
+
+//Transactions
+app.get("/transactions", async (req, res) => {
+    let token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+
+    try {
+        const decoded = jwt.verify(token, "CharityApp");
+        const user = await userModel.findOne({ email: decoded.email });
+
+        if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+
+        const transactions = await paymentModel.find({ userId: user._id });
+        res.json(transactions);
+
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch transactions" });
+    }
+});
+
+//Fetch Transactions
+app.get("/alltransactions", async (req, res) => {
+    try {
+        const transactions = await paymentModel.find();
+        res.json(transactions);
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch transactions" });
+    }
+});
+
+
   
 app.listen(3030, () =>{
     console.log("Server Started")
