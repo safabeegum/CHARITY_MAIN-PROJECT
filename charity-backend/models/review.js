@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
-const reviewSchema = mongoose.Schema({
+const Mongoose = require("mongoose");
+const reviewSchema = Mongoose.Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Mongoose.Schema.Types.ObjectId,
         ref: "users",
         required: true
     },
@@ -21,5 +21,5 @@ const reviewSchema = mongoose.Schema({
     }
 });
 
-const reviewModel = mongoose.model("review", reviewSchema);
+const reviewModel = Mongoose.model("review", reviewSchema);
 module.exports = reviewModel;

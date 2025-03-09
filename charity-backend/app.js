@@ -6,12 +6,15 @@ const jwt = require("jsonwebtoken");
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
+const multer = require('multer');
+const path = require('path');
 
 const userModel = require("./models/users");
 const adminModel = require("./models/admin");
 const socialworkersModel = require("./models/socialworkers");
 const reviewModel = require("./models/review");
 const paymentModel = require("./models/payment");
+const postModel = require('./models/post');
 
 let app = Express(); // Capitalized Express Initialization
 
@@ -684,6 +687,150 @@ app.post("/getuserpayment", async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: "Error", message: "Failed to fetch payments" });
+    }
+});
+
+
+//Add Post
+
+// ✅ Multer Configuration
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './uploads');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// ✅ Add Post API
+app.post("/addpost", async (req, res) => {
+    // ✅ Extract Token from Header
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+
+    try {
+        // ✅ Verify Token
+        const decoded = jwt.verify(token, "CharityApp");
+
+        // ✅ Upload File only if Token is Valid
+        upload.single('file')(req, res, async (err) => {
+            if (err) {
+                return res.status(500).json({ status: "Error", message: "Failed to upload file" });
+            }
+
+            const { title, description, requiredAmount, name, age, location, contact, purpose, accountName, accountNo, ifsc, bankName } = req.body;
+
+            // ✅ Check if All Required Fields are Provided
+            if (!title || !description || !requiredAmount || !name || !age || !location || !contact) {
+                return res.status(400).json({ status: "Error", message: "All fields are required" });
+            }
+
+            // ✅ Get File Path if File is Uploaded
+            const filePath = req.file ? req.file.path : null;
+            const documentType = req.file && req.file.mimetype.startsWith('image/') ? 'image' : 'document';
+
+            // ✅ 🚀 Save Post to Database with STATUS = 'PENDING'
+            const newPost = new postModel({
+                title,
+                description,
+                requiredAmount,
+                image: filePath,
+                documentType,
+                postedBy: decoded.email,
+                name,
+                age,
+                location,
+                contact,
+                purpose,
+                accountName,
+                accountNo,
+                ifsc,
+                bankName,
+                status: 'pending'  // ✅ Automatically set as PENDING
+            });
+
+            await newPost.save();
+            res.status(200).json({ status: "Success", message: "Post added successfully. Waiting for admin approval." });
+        });
+
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to add post", error: error.message });
+    }
+});
+
+
+
+//Admin Approval
+
+app.post("/approvepost", async (req, res) => {
+    const { postId, action, rejectionReason } = req.body;
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+
+    try {
+        // ✅ Verify Token
+        const decoded = jwt.verify(token, "CharityApp");
+
+        // ✅ Check If User Is Admin
+        if (decoded.role !== "admin") {
+            return res.status(403).json({ status: "Error", message: "Access Denied. Admin only." });
+        }
+
+        // ✅ Find Post
+        const post = await postModel.findById(postId);
+        if (!post) return res.status(404).json({ status: "Error", message: "Post not found" });
+
+        // ✅ Handle Approve/Reject
+        if (action === "approve") {
+            post.status = "Approved";
+            post.rejectionReason = "";
+        } else if (action === "reject") {
+            post.status = "Rejected";
+            post.rejectionReason = rejectionReason;
+        } else {
+            return res.status(400).json({ status: "Error", message: "Invalid action" });
+        }
+
+        await post.save();
+        res.json({ status: "Success", message: `Post has been ${action}d successfully.` });
+
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to approve/reject post", error: error.message });
+    }
+});
+
+//Pending Posts
+app.post("/pendingposts", async (req, res) => {
+    try {
+        const posts = await postModel.find({ status: "Pending" });
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch pending posts" });
+    }
+});
+
+
+//Approved Posts
+app.post("/approvedposts", async (req, res) => {
+    try {
+        const posts = await postModel.find({ status: "Approved" });
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch approved posts" });
+    }
+});
+
+//Rejected Posts
+app.post("/rejectedposts", async (req, res) => {
+    try {
+        const posts = await postModel.find({ status: "Rejected" });
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch rejected posts" });
     }
 });
 
