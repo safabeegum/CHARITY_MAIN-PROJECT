@@ -28,6 +28,7 @@ import EditProfileModal from './components/EditProfileModal';
 import MakePayment from './components/MakePayment';
 import PaymentDetails from './components/PaymentDetails';
 import PaymentHistory from './components/PaymentHistory';
+import AddPost from './components/AddPost';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path='/socialworkerslogin' element={<SocialWorkersLogin/>}/>
         <Route path='/socialworkersnavbar' element={<SocialWorkersNavbar/>}/>
         <Route path='/socialworkersdashboard' element={<SocialWorkersDashboard/>}/>
+        <Route path='/addpost' element={<AddPost/>}/>
         <Route path='/usernavbar' element={<UserNavbar/>}/>
         <Route path='/userdashboard' element={<UserDashboard/>}/>
         <Route path='/gameindex' element={<GameIndex/>}/>

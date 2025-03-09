@@ -14,10 +14,10 @@ const SocialWorkersDashboard = () => {
           
           <ul className="nav nav-pills flex-column">
             <li className="nav-item">
-              <a className="nav-link text-dark fw-bold " href="#home">HOME</a>
+              <a className="nav-link text-dark fw-bold " href="/">HOME</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link text-dark fw-bold" href="#">CHANGE PASSWORD</a>
+              <a className="nav-link text-dark fw-bold" href="/addpost">ADD POSTS</a>
             </li>
             <li className="nav-item">
               <a className="nav-link text-dark fw-bold" href="#">MANAGE POSTS</a>

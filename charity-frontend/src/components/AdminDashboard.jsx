@@ -94,7 +94,7 @@ const AdminDashboard = () => {
               { href: "/admindashboard", icon: faHome, label: "Home" },
               { href: "/manageusers", icon: faUsers, label: "Manage Users" },
               { href: "/managesocialworkers", icon: faHandsHelping, label: "Manage Social Workers" },
-              { href: "/viewreports", icon: faFileAlt, label: "View Reports" },
+              { href: "/viewreports", icon: faFileAlt, label: "Pending Posts" },
               { href: "/managereview", icon: faComments, label: "Manage Reviews" }
             ].map((item, index) => (
               <li key={index} className="nav-item">
