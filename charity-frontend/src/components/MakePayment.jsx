@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import UserNavbar from "./UserNavbar";
 
 const MakePayment = () => {
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState(""); // Default empty to show placeholder
+  const [method, setMethod] = useState("");
   const navigate = useNavigate();
+  const { postId } = useParams();  // ✅ Capture the post ID from URL
 
   const handleNext = (e) => {
     e.preventDefault();
@@ -13,7 +14,7 @@ const MakePayment = () => {
       alert("Enter a valid amount");
       return;
     }
-    navigate(`/paymentdetails/${method}/${amount}`);
+    navigate(`/paymentdetails/${method}/${amount}/${postId}`);  // ✅ Pass post ID in URL
   };
 
   return (
@@ -34,12 +35,11 @@ const MakePayment = () => {
 
             <label className="fw-bold">Select Payment Method:</label>
             <select value={method} onChange={(e) => setMethod(e.target.value)} className="form-control mb-3">
-  <option value="" disabled>----SELECT PAYMENT METHOD----</option>
-  <option value="card">💳 Credit / Debit Card</option>
-  <option value="upi">📲 UPI</option>
-  <option value="bank">🏦 Bank Transfer</option>
-</select>
-
+              <option value="" disabled>----SELECT PAYMENT METHOD----</option>
+              <option value="card">💳 Credit / Debit Card</option>
+              <option value="upi">📲 UPI</option>
+              <option value="bank">🏦 Bank Transfer</option>
+            </select>
 
             <button type="submit" className="btn btn-danger w-100">Next</button>
           </form>

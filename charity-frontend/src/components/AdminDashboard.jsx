@@ -94,7 +94,7 @@ const AdminDashboard = () => {
               { href: "/admindashboard", icon: faHome, label: "Home" },
               { href: "/manageusers", icon: faUsers, label: "Manage Users" },
               { href: "/managesocialworkers", icon: faHandsHelping, label: "Manage Social Workers" },
-              { href: "/viewreports", icon: faFileAlt, label: "Pending Posts" },
+              { href: "/pendingposts", icon: faFileAlt, label: "Pending Posts" },
               { href: "/managereview", icon: faComments, label: "Manage Reviews" }
             ].map((item, index) => (
               <li key={index} className="nav-item">
@@ -110,7 +110,7 @@ const AdminDashboard = () => {
 
         {/* Main Content */}
         <div className="col-sm-9">
-          <h4><small>RECENT POSTS</small></h4>
+          <h4><small>RECENT ACTIVITY</small></h4>
           <hr />
 
           {/* Dashboard Overview Section */}
@@ -118,7 +118,7 @@ const AdminDashboard = () => {
             {[
               { title: "Users", value: stats.users, color: "bg-primary", desc: "Active Users" },
               { title: "Charity Organizations", value: stats.socialWorkers, color: "bg-success", desc: "Total Registered" },
-              { title: "Reports", value: stats.reports, color: "bg-warning", desc: "Pending Reviews" },
+              { title: "Pending Approvals", value: stats.pendingApprovals, color: "bg-warning", desc: "Pending Approval" },
               { title: "Feedback", value: stats.feedback, color: "bg-danger", desc: "Unread Feedback" }
             ].map((card, index) => (
               <div key={index} className="col-md-3">

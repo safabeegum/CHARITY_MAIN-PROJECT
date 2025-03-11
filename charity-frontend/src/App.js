@@ -29,6 +29,7 @@ import MakePayment from './components/MakePayment';
 import PaymentDetails from './components/PaymentDetails';
 import PaymentHistory from './components/PaymentHistory';
 import AddPost from './components/AddPost';
+import PendingPosts from './components/PendingPosts';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
         <Route path='/adminlogin' element={<AdminLogin/>}/>
         <Route path='/adminnavbar' element={<AdminNavbar/>}/>
         <Route path='/admindashboard' element={<AdminDashboard/>}/>
+        <Route path='/pendingposts' element={<PendingPosts/>}/>
         <Route path='/manageusers' element={<ManageUsers/>}/>
         <Route path='/managesocialworkers' element={<ManageSocialWorkers/>}/>
         <Route path='/socialworkerslogin' element={<SocialWorkersLogin/>}/>
@@ -52,10 +54,9 @@ function App() {
         <Route path='/usernavbar' element={<UserNavbar/>}/>
         <Route path='/userdashboard' element={<UserDashboard/>}/>
         <Route path='/gameindex' element={<GameIndex/>}/>
-        <Route path='/makepayment' element={<MakePayment/>}/>
-        <Route path='/paymentdetails' element={<PaymentDetails/>}/>
+        <Route path='/makepayment/:postId' element={<MakePayment/>}/>
+        <Route path='/paymentdetails/:method/:amount/:postId' element={<PaymentDetails/>}/>
         <Route path='/paymenthistory' element={<PaymentHistory/>}/>
-        <Route path="/paymentdetails/:method/:amount" element={<PaymentDetails />} />
         <Route path="/success" element={<h2>Payment Successful!</h2>} />
         <Route path='/review' element={<Review/>}/>
         <Route path='/managereview' element={<ManageReview/>}/>
