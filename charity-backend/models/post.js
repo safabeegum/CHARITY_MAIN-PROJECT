@@ -36,6 +36,10 @@ const postSchema = new Mongoose.Schema({
         type: Number,
         required: true
     },
+    collectedAmount: {
+         type: Number, 
+         default: 0 
+    },
     accountName:{
         type:String
     },
@@ -53,14 +57,9 @@ const postSchema = new Mongoose.Schema({
         type: Number,
         default: 0
     },
-    
-    postedBy: {
-        type: String, // Email of the social worker who posted it
-        required: true
-    },
     status: {
         type: String,
-        default: "Pending",
+        default: "pending",
         enum: ['pending', 'approved', 'rejected'],
     },
     rejectionReason: {

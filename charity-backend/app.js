@@ -8,6 +8,9 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
+
+
 
 const userModel = require("./models/users");
 const adminModel = require("./models/admin");
@@ -16,13 +19,14 @@ const reviewModel = require("./models/review");
 const paymentModel = require("./models/payment");
 const postModel = require('./models/post');
 
-let app = Express(); // Capitalized Express Initialization
+let app = Express(); // 
 
 app.use(Express.json()); // Capitalized Express Middleware
 app.use(Cors()); // Capitalized Cors Middleware
 
 Mongoose.connect("mongodb+srv://safabeegum:mongodb24@cluster0.pbzbbey.mongodb.net/CharityApp?retryWrites=true&w=majority&appName=Cluster0")
 
+ app.use('/uploads', Express.static('uploads'));
 
 
 
@@ -115,24 +119,29 @@ app.post("/login",async(req,res) => {
 
 app.post("/api/admindashboard", async (req, res) => {
     try {
-        // Fetching statistics
-        const usersCount = await userModel.countDocuments();
-        const socialWorkersCount = await socialworkersModel.countDocuments();
-        const reportsCount = await reviewModel.countDocuments(); // Assuming reports are stored in reviewModel
-        const feedbackCount = await reviewModel.countDocuments(); // Assuming feedback is stored in reviewModel
-
-        res.json({
-            users: usersCount,
-            socialWorkers: socialWorkersCount,
-            reports: reportsCount,
-            feedback: feedbackCount
-        });
-
+      // Fetching statistics
+      const usersCount = await userModel.countDocuments();
+      const socialWorkersCount = await socialworkersModel.countDocuments();
+      
+      // Count reports that are "pending approval" (assuming the status is a field in your reviewModel)
+      const pendingReportsCount = await postModel.countDocuments({ status: "pending" }); // Change "pending" to whatever status represents pending approvals in your model
+  
+      // Feedback count remains the same (assuming feedback has no status check)
+      const feedbackCount = await reviewModel.countDocuments(); // Assuming feedback is stored in reviewModel
+  
+      res.json({
+        users: usersCount,
+        socialWorkers: socialWorkersCount,
+        pendingApprovals: pendingReportsCount, // Return the count of pending approvals
+        feedback: feedbackCount
+      });
+  
     } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-        res.status(500).json({ status: "Error", message: "Failed to fetch dashboard stats" });
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ status: "Error", message: "Failed to fetch dashboard stats" });
     }
-});
+  });
+  
 
 
 //User Activity
@@ -428,32 +437,6 @@ app.post("/socialworkerslogin", async (req, res) => {
     }
 });
 
-/* Route for Changing Password (Hashes the new password)
-app.post("/changepassword", async (req, res) => {
-    const { userId, oldPassword, newPassword } = req.body;
-
-    try {
-        let user = await socialworkersModel.findById(userId);
-
-        if (!user) {
-            return res.json({ "status": "User Not Found" });
-        }
-
-        let passwordMatches = bcrypt.compareSync(oldPassword, user.password);
-        if (!passwordMatches) {
-            return res.json({ "status": "Incorrect Old Password" });
-        }
-
-        const hashedPassword = bcrypt.hashSync(newPassword, 10);
-        await socialworkersModel.updateOne({ _id: userId }, { $set: { password: hashedPassword } });
-
-        res.json({ "status": "Password Changed Successfully" });
-
-    } catch (error) {
-        res.json({ "status": "Error", "error": error.message });
-    }
-});*/
-
 
 //Manage Social Workers
 app.post("/managesocialworkers", async(req,res)=> {
@@ -502,113 +485,185 @@ app.post("/retrievesocialworkers", async (req, res) => {
   
   // Make Payment
 
-app.post("/makepayment", async (req, res) => {
-    let { amount, method } = req.body;
-    let token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+  app.post("/makepayment", async (req, res) => {
+    const { userId, postId, amount, method } = req.body;
 
     try {
-        const decoded = jwt.verify(token, "CharityApp");
-        const user = await userModel.findOne({ email: decoded.email });
-
-        if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-
-        const payment = new paymentModel({
-            userId: user._id,
+        // ✅ Step 1: Create Payment Entry in MongoDB 💸
+        const payment = await paymentModel.create({
+            userId,
+            postId,
             amount,
             method,
-            status: "pending",
+            status: 'pending'  // ✅ Initially keep it 'pending' until processed
         });
 
-        await payment.save();
-        res.json({ status: "Success", message: "Payment initiated", paymentId: payment._id });
+        // ✅ Step 2: Find the Post Where Payment Was Made
+        const post = await postModel.findById(postId);
+        if (!post) {
+            return res.status(404).json({ status: "Failed", message: "Post not found" });
+        }
+
+        // ✅ Step 3: Add The Amount To Collected Donations 💰
+        post.currentDonationsReceived += Number(amount);
+
+        // ✅ Step 4: Check If Target Amount is Reached, Auto-Approve Post 💸
+        if (post.currentDonationsReceived >= post.requiredAmount) {
+            post.status = 'approved';  // ✅ Auto-Approve if donation goal is met
+        }
+
+        // ✅ Step 5: Save Post Update in MongoDB 💾
+        await post.save();
+
+        // ✅ Step 6: Return Payment Success Response Along with Payment ID 💯
+        return res.status(200).json({
+            status: "Success",
+            message: "Payment Initiated Successfully",
+            paymentId: payment._id
+        });
 
     } catch (error) {
-        res.status(401).json({ status: "Error", message: "Invalid Token" });
+        console.error("❌ Payment Error:", error);
+        return res.status(500).json({
+            status: "Failed",
+            message: "Payment Failed",
+            error: error.message
+        });
     }
 });
 
-//Process Payment
-app.post("/processpayment", async (req, res) => {
-    let { paymentId } = req.body;
-    let token = req.headers.authorization?.split(" ")[1];
 
-    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
+
+
+//Process Payment
+
+const brevoApiKey = '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';
+SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = brevoApiKey;
+
+app.post("/processpayment", async (req, res) => {
+    const { paymentId } = req.body;
+    const token = req.headers.authorization?.split(" ")[1];
+
+    // ✅ Step 1: Check Token
+    if (!token) {
+        return res.status(401).json({
+            status: "Error",
+            message: "Token is missing! Unauthorized access"
+        });
+    }
 
     try {
+        // ✅ Step 2: Verify Token
         const decoded = jwt.verify(token, "CharityApp");
-        const user = await userModel.findOne({ email: decoded.email });
 
-        if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-
+        // ✅ Step 3: Find Payment
         const payment = await paymentModel.findById(paymentId);
-        if (!payment) return res.status(404).json({ status: "Error", message: "Payment not found" });
+        if (!payment) {
+            return res.status(404).json({
+                status: "Error",
+                message: "Payment not found!"
+            });
+        }
 
-        // ✅ Mark Payment As Success
+        // ✅ Step 4: Check If Payment Already Processed
+        if (payment.status === "success") {
+            return res.status(200).json({
+                status: "Success",
+                message: "Payment already processed!"
+            });
+        }
+
+        // ✅ Step 5: Find Related Post
+        const post = await postModel.findById(payment.postId);
+        if (!post) {
+            return res.status(404).json({
+                status: "Error",
+                message: "Post not found!"
+            });
+        }
+
+        // ✅ Step 6: Mark Payment as Success
         payment.status = "success";
         await payment.save();
 
-        // ✅ NOW GENERATE PDF IN-MEMORY WITHOUT STORING 💯🔥
+        // ✅ Step 7: Add Donation to Post
+        post.currentDonationsReceived += Number(payment.amount);
+        if (post.currentDonationsReceived >= post.requiredAmount) {
+            post.status = 'approved';
+        }
+        await post.save();
+
+        // ✅ Step 8: Generate PDF Receipt Using pdf-lib
         const pdfDoc = await PDFDocument.create();
         const page = pdfDoc.addPage([600, 400]);
-
         const { width, height } = page.getSize();
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-        page.setFont(font);
-
-        // ✅ Add Receipt Heading
-        page.drawText('Payment Receipt', { x: 220, y: height - 50, size: 20 });
-
-        // ✅ Add Payment Details
-        page.drawText(`Transaction ID: ${payment._id}`, { x: 50, y: height - 100 });
-        page.drawText(`Amount Paid: Rs. ${payment.amount}`, { x: 50, y: height - 130 });  // 👈 Removed ₹ Symbol
-        page.drawText(`Payment Method: ${payment.method}`, { x: 50, y: height - 160 });
-        page.drawText(`Payment Status: ${payment.status}`, { x: 50, y: height - 190 });
-        page.drawText(`Date & Time: ${new Date(payment.createdAt).toLocaleString()}`, { x: 50, y: height - 220 });
-
-        // ✅ Save PDF Buffer
-        const pdfBytes = await pdfDoc.save();
-
-        // ✅ SEND EMAIL WITH PDF ATTACHMENT 💣🔥
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: 'charityapp2025',
-                pass: 'zagp exnp ujys fmef'
-            }
+        // ✅ Add Text To PDF
+        const fontSize = 12;
+        page.drawText('Payment Receipt', {
+            x: 200,
+            y: height - 50,
+            size: 20,
+            font,
+            color: rgb(0, 0, 0)
         });
 
-        const mailOptions = {
-            from: 'charityapp2025',
-            to: user.email,
-            subject: 'Payment Receipt',
-            text: 'Thank you for your payment. Please find the attached receipt.',
-            attachments: [
-                {
-                    filename: `Receipt_${payment._id}.pdf`,
-                    content: pdfBytes,
-                    encoding: 'base64'
-                }
-            ]
-        };
+        page.drawText(`Transaction ID: ${payment._id}`, { x: 50, y: height - 100, size: fontSize, font });
+        page.drawText(`Amount Paid: INR ${payment.amount}`, { x: 50, y: height - 120, size: fontSize, font });
+        page.drawText(`Payment Method: ${payment.method}`, { x: 50, y: height - 140, size: fontSize, font });
+        page.drawText(`Payment Status: ${payment.status}`, { x: 50, y: height - 160, size: fontSize, font });
+        page.drawText(`Date & Time: ${new Date(payment.createdAt).toLocaleString()}`, { x: 50, y: height - 180, size: fontSize, font });
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error("❌ Error sending email:", error);
-                return res.status(500).json({ status: "Error", message: "Failed to send email" });
-            }
-            console.log("✅ Email sent:", info.response);
-            res.json({ status: "Success", message: "Payment successful and receipt sent!" });
+        // ✅ Convert PDF to Buffer
+        const pdfBytes = await pdfDoc.save();
+        const pdfBuffer = Buffer.from(pdfBytes);
+
+        // ✅ Step 9: Send Email Using Brevo
+        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+        sendSmtpEmail.subject = "Payment Receipt - Thank You for Your Donation!";
+        sendSmtpEmail.htmlContent = `
+            <h3>Dear Donor,</h3>
+            <p>Thank you for your generous donation of ₹${payment.amount}.</p>
+            <p>Please find the attached payment receipt for your reference.</p>
+            <p><strong>Transaction ID:</strong> ${payment._id}</p>
+            <p><strong>Payment Method:</strong> ${payment.method}</p>
+            <p><strong>Date:</strong> ${new Date(payment.createdAt).toLocaleString()}</p>
+            <p>We sincerely appreciate your support.</p>
+            <br>
+            <p>Regards,</p>
+            <p><strong>CharityApp Team</strong></p>
+        `;
+        sendSmtpEmail.sender = { name: "CharityApp", email: "charityapp2025@gmail.com" };
+        sendSmtpEmail.to = [{ email: decoded.email }];
+
+        // ✅ Attach the PDF Receipt
+        sendSmtpEmail.attachment = [{
+            content: pdfBuffer.toString('base64'),
+            name: `Receipt_${payment._id}.pdf`
+        }];
+
+        // ✅ Send Email
+        await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+        // ✅ Return Success Response
+        return res.status(200).json({
+            status: "Success",
+            message: "Payment successfully processed & receipt emailed!",
+            paymentId: payment._id
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ status: "Error", message: "Payment failed", error: error.message });
+        console.error("❌ Payment Processing Error:", error);
+        return res.status(500).json({
+            status: "Error",
+            message: "Failed to process payment. Something went wrong."
+        });
     }
 });
-
+  
 
 
 
@@ -691,6 +746,7 @@ app.post("/getuserpayment", async (req, res) => {
 });
 
 
+
 //Add Post
 
 // ✅ Multer Configuration
@@ -705,108 +761,83 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// ✅ Add Post API
-app.post("/addpost", async (req, res) => {
-    // ✅ Extract Token from Header
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
 
-    try {
-        // ✅ Verify Token
-        const decoded = jwt.verify(token, "CharityApp");
+// ✅ ADD POST API (WITHOUT ROUTER 💯)
+app.post("/addpost", (req, res) => {
+    // ✅ Upload File without Overwriting Body
+    upload.single('file')(req, res, async (err) => {
+        if (err) {
+            return res.status(500).json({ status: "Error", message: "Failed to upload file" });
+        }
 
-        // ✅ Upload File only if Token is Valid
-        upload.single('file')(req, res, async (err) => {
-            if (err) {
-                return res.status(500).json({ status: "Error", message: "Failed to upload file" });
-            }
+        // ✅ Get All Form Data from React
+        const { 
+            title, description, requiredAmount, 
+            name, age, location, contact, 
+            purpose, accountName, accountNo, ifsc, bankName 
+        } = req.body;
 
-            const { title, description, requiredAmount, name, age, location, contact, purpose, accountName, accountNo, ifsc, bankName } = req.body;
+        // ✅ Check Required Fields
+        if (!title || !description || !requiredAmount || !name || !age || !location || !contact) {
+            return res.status(400).json({ status: "Error", message: "All fields are required" });
+        }
 
-            // ✅ Check if All Required Fields are Provided
-            if (!title || !description || !requiredAmount || !name || !age || !location || !contact) {
-                return res.status(400).json({ status: "Error", message: "All fields are required" });
-            }
+        // ✅ Handle File Path
+        const filePath = req.file ? req.file.path : null;
+        const documentType = req.file && req.file.mimetype.startsWith('image/') ? 'image' : 'document';
 
-            // ✅ Get File Path if File is Uploaded
-            const filePath = req.file ? req.file.path : null;
-            const documentType = req.file && req.file.mimetype.startsWith('image/') ? 'image' : 'document';
-
-            // ✅ 🚀 Save Post to Database with STATUS = 'PENDING'
-            const newPost = new postModel({
-                title,
-                description,
-                requiredAmount,
-                image: filePath,
-                documentType,
-                postedBy: decoded.email,
-                name,
-                age,
-                location,
-                contact,
-                purpose,
-                accountName,
-                accountNo,
-                ifsc,
-                bankName,
-                status: 'pending'  // ✅ Automatically set as PENDING
-            });
-
-            await newPost.save();
-            res.status(200).json({ status: "Success", message: "Post added successfully. Waiting for admin approval." });
+        // ✅ 🚀 Save Data in MongoDB
+        const newPost = new postModel({
+            title,
+            description,
+            requiredAmount,
+            image: filePath,
+            documentType,
+            name,
+            age,
+            location,
+            contact,
+            purpose,
+            accountName,
+            accountNo,
+            ifsc,
+            bankName,
+            status: 'pending'  // ✅ Automatically set as PENDING
         });
 
-    } catch (error) {
-        res.status(500).json({ status: "Error", message: "Failed to add post", error: error.message });
-    }
+        // ✅ Save in MongoDB
+        await newPost.save();
+        res.status(200).json({ status: "Success", message: "Post added successfully. Waiting for admin approval." });
+    });
 });
 
 
-
-//Admin Approval
-
-app.post("/approvepost", async (req, res) => {
-    const { postId, action, rejectionReason } = req.body;
-    const token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) return res.status(401).json({ status: "Error", message: "Token is missing" });
-
+app.post('/getSocialWorkerPosts', async (req, res) => {
+    const { email } = req.body; // Retrieve the email from the POST body
+  
     try {
-        // ✅ Verify Token
-        const decoded = jwt.verify(token, "CharityApp");
-
-        // ✅ Check If User Is Admin
-        if (decoded.role !== "admin") {
-            return res.status(403).json({ status: "Error", message: "Access Denied. Admin only." });
-        }
-
-        // ✅ Find Post
-        const post = await postModel.findById(postId);
-        if (!post) return res.status(404).json({ status: "Error", message: "Post not found" });
-
-        // ✅ Handle Approve/Reject
-        if (action === "approve") {
-            post.status = "Approved";
-            post.rejectionReason = "";
-        } else if (action === "reject") {
-            post.status = "Rejected";
-            post.rejectionReason = rejectionReason;
-        } else {
-            return res.status(400).json({ status: "Error", message: "Invalid action" });
-        }
-
-        await post.save();
-        res.json({ status: "Success", message: `Post has been ${action}d successfully.` });
-
+      // Find posts created by the social worker with the given email
+      const posts = await postModel.find({ createdBy: email });
+  
+      if (!posts || posts.length === 0) {
+        return res.status(404).json({ message: 'No posts found' });
+      }
+  
+      res.json(posts);
     } catch (error) {
-        res.status(500).json({ status: "Error", message: "Failed to approve/reject post", error: error.message });
+      console.error('❌ Error fetching posts:', error);
+      res.status(500).json({ message: 'Failed to fetch posts' });
     }
-});
+  });
+
+  
 
 //Pending Posts
 app.post("/pendingposts", async (req, res) => {
     try {
-        const posts = await postModel.find({ status: "Pending" });
+        const posts = await postModel
+            .find({ status: "pending" });
+
         res.json(posts);
     } catch (error) {
         res.status(500).json({ status: "Error", message: "Failed to fetch pending posts" });
@@ -814,20 +845,58 @@ app.post("/pendingposts", async (req, res) => {
 });
 
 
+//Admin Approval
+app.post("/approvepost", async (req, res) => {
+    const { postId, action, rejectionReason } = req.body;
+
+    try {
+        // ✅ Hardcoded admin email for testing
+        const email = 'admin@gmail.com';  // Hardcoded admin email for testing
+
+        // ✅ Directly approve or reject the post without checking role
+        if (action === 'approve') {
+            await postModel.findByIdAndUpdate(postId, { status: 'approved' });
+            return res.json({ message: "✅ Post approved successfully" });
+        }
+
+        if (action === 'reject') {
+            await postModel.findByIdAndUpdate(postId, {
+                status: 'Rejected',
+                rejectionReason
+            });
+            return res.json({ message: "❌ Post rejected successfully" });
+        }
+
+    } catch (error) {
+        res.status(500).json({ message: "Failed to approve/reject post" });
+    }
+});
+
+
+
+
+
 //Approved Posts
 app.post("/approvedposts", async (req, res) => {
     try {
-        const posts = await postModel.find({ status: "Approved" });
-        res.json(posts);
+        const posts = await postModel.find({ status: "approved" });
+
+        // ✅ Filter only posts where the target amount is not reached
+        const openForDonations = posts.filter(post => 
+            parseFloat(post.requiredAmount) > parseFloat(post.collectedAmount || 0)
+        );
+
+        res.json(openForDonations);
     } catch (error) {
         res.status(500).json({ status: "Error", message: "Failed to fetch approved posts" });
     }
 });
 
+
 //Rejected Posts
 app.post("/rejectedposts", async (req, res) => {
     try {
-        const posts = await postModel.find({ status: "Rejected" });
+        const posts = await postModel.find({ status: "rejected" });
         res.json(posts);
     } catch (error) {
         res.status(500).json({ status: "Error", message: "Failed to fetch rejected posts" });
