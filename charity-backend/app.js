@@ -9,25 +9,29 @@ const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
-
-
+const EventEmitter = require('events');
+const paymentEvents = new EventEmitter();
 
 const userModel = require("./models/users");
 const adminModel = require("./models/admin");
 const socialworkersModel = require("./models/socialworkers");
 const reviewModel = require("./models/review");
 const paymentModel = require("./models/payment");
-const postModel = require('./models/post');
+const postModel = require("./models/post");
+const gameDonationModel = require("./models/gamedonation");
+const platformEarningModel = require('./models/platformearning');
+const guessTheNumberModel = require("./models/guessthenumber");
+const quizModel = require("./models/quiz");
+  
+
 
 let app = Express(); // 
-
 app.use(Express.json()); // Capitalized Express Middleware
 app.use(Cors()); // Capitalized Cors Middleware
 
 Mongoose.connect("mongodb+srv://safabeegum:mongodb24@cluster0.pbzbbey.mongodb.net/CharityApp?retryWrites=true&w=majority&appName=Cluster0")
 
- app.use('/uploads', Express.static('uploads'));
-
+app.use('/uploads', Express.static('uploads'));
 
 
 //Admin Login
@@ -78,103 +82,35 @@ app.post("/adminregister", (req, res) => {
   });
 
 //Login
-app.post("/login",async(req,res) => {
-    let input = req.body 
-    let result = userModel.find({email:req.body.email}).then(
-        (items)=>{
-            if(items.length>0)
-            {
-                const passwordValidator = Bcrypt.compareSync(req.body.password, items[0].password)
-                if(passwordValidator)
-                {
-                    //create token start
-                    jwt.sign({email:req.body.email},"CharityApp",{expiresIn:"1d"},
-                        (error,token)=>{
-                            if (error) 
-                            {
-                                res.json({"status":"Error","error":error})
-                            } 
-                            else 
-                            {
-                                res.json({"status":"Success","token":token,"userId":items[0]._id})
-                            }
+app.post("/login", async (req, res) => {
+    let input = req.body;
+    
+    let result = userModel.find({ email: req.body.email }).then((items) => {
+        if (items.length > 0) {
+            const passwordValidator = Bcrypt.compareSync(req.body.password, items[0].password);
+            
+            if (passwordValidator) {
+                // ✅ Include `userId` inside the token
+                jwt.sign(
+                    { userId: items[0]._id, email: req.body.email },  // ✅ Now token contains `userId`
+                    "CharityApp",
+                    { expiresIn: "1d" },
+                    (error, token) => {
+                        if (error) {
+                            res.json({ "status": "Error", "error": error });
+                        } else {
+                            res.json({ "status": "Success", "token": token });
                         }
-                    )
-                    //create token end
-                }
-                else
-                {
-                    res.json({"status":"Incorrect Password"})
-                }
+                    }
+                );
+            } else {
+                res.json({ "status": "Incorrect Password" });
             }
-            else{
-                res.json({"status":"Invalid Email ID"})
-            }
+        } else {
+            res.json({ "status": "Invalid Email ID" });
         }
-    )
-})
-
-
-//Admin Dashboard
-
-app.post("/api/admindashboard", async (req, res) => {
-    try {
-      // Fetching statistics
-      const usersCount = await userModel.countDocuments();
-      const socialWorkersCount = await socialworkersModel.countDocuments();
-      
-      // Count reports that are "pending approval" (assuming the status is a field in your reviewModel)
-      const pendingReportsCount = await postModel.countDocuments({ status: "pending" }); // Change "pending" to whatever status represents pending approvals in your model
-  
-      // Feedback count remains the same (assuming feedback has no status check)
-      const feedbackCount = await reviewModel.countDocuments(); // Assuming feedback is stored in reviewModel
-  
-      res.json({
-        users: usersCount,
-        socialWorkers: socialWorkersCount,
-        pendingApprovals: pendingReportsCount, // Return the count of pending approvals
-        feedback: feedbackCount
-      });
-  
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-      res.status(500).json({ status: "Error", message: "Failed to fetch dashboard stats" });
-    }
-  });
-  
-
-
-//User Activity
-app.post("/api/useractivity", async (req, res) => {
-    try {
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 7);
-
-        const activity = await userModel.aggregate([
-            {
-                $match: { createdAt: { $gte: last7Days } } // Ensure createdAt is present
-            },
-            {
-                $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, // Format date
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $sort: { _id: 1 }
-            }
-        ]);
-
-        console.log("User Activity Data:", activity); // Debugging: Check if data is retrieved
-
-        res.json(activity.length > 0 ? activity.map(item => ({ date: item._id, count: item.count })) : []);
-
-    } catch (error) {
-        console.error("Error fetching user activity:", error);
-        res.status(500).json({ status: "Error", message: "Failed to fetch user activity" });
-    }
+    });
 });
-
 
 
 //Register
@@ -199,204 +135,7 @@ app.post("/register", async(req,res)=> {
 
 })
 
-//Manage Users
-app.post("/manageusers", async (req, res) => {
-    let token = req.headers.token;
-  
-    if (!token) {
-      console.log("No token provided");
-      return res.status(401).json({ status: "Token is missing" });
-    }
-  
-    jwt.verify(token, "CharityApp", async (error, decoded) => {
-      if (error) {
-        console.log("JWT verification failed:", error.message);
-        return res.status(403).json({ status: "Invalid Token", error: error.message });
-      }
-  
-      console.log("Token is valid for:", decoded.email);
-  
-      try {
-        const users = await userModel.find();
-        console.log("Users retrieved successfully:", users.length);
-        res.json(users);
-      } catch (err) {
-        console.error("Database error:", err);
-        res.status(500).json({ status: "Error fetching users" });
-      }
-    })
-  })
-
-
-//Post a Review 
-
-app.post("/manageusers", async (req, res) => {
-    let token = req.headers.token;
-  
-    if (!token) {
-      console.log("No token provided");
-      return res.status(401).json({ status: "Token is missing" });
-    }
-  
-    jwt.verify(token, "CharityApp", async (error, decoded) => {
-      if (error) {
-        console.log("JWT verification failed:", error.message);
-        return res.status(403).json({ status: "Invalid Token", error: error.message });
-      }
-  
-      console.log("Token is valid for:", decoded.email);
-  
-      try {
-        const users = await userModel.find();
-        console.log("Users retrieved successfully:", users.length);
-        res.json(users);
-      } catch (err) {
-        console.error("Database error:", err);
-        res.status(500).json({ status: "Error fetching users" });
-      }
-    })
-  })
-
-app.post("/review", async (req, res) => {
-    let { review, rating } = req.body;
-    let token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
-
-    if (!review || review.trim() === "") {
-        return res.status(400).json({ status: "Error", message: "Review is required" });
-    }
-    if (!rating || rating < 1 || rating > 5) {
-        return res.status(400).json({ status: "Error", message: "Rating must be between 1 and 5" });
-    }
-
-    try {
-        const decoded = jwt.verify(token, "CharityApp");
-        const user = await userModel.findOne({ email: decoded.email });
-
-        if (!user) {
-            return res.status(404).json({ status: "Error", message: "User not found" });
-        }
-
-        let newReview = new reviewModel({
-            userId: user._id,
-            review,
-            rating,
-            email: user.email
-        });
-
-        await newReview.save();
-        res.status(201).json({ status: "Success", message: "Review submitted successfully" });
-
-    } catch (error) {
-        console.error(error);
-        res.status(401).json({ status: "Error", message: "Invalid Token" });
-    }
-});
-
-//Manage Review
-app.post("/managereview", async (req, res) => {
-    let token = req.headers.token;
-  
-    if (!token) {
-      console.log("No token provided");
-      return res.status(401).json({ status: "Token is missing" });
-    }
-  
-    jwt.verify(token, "CharityApp", async (error, decoded) => {
-      if (error) {
-        console.log("JWT verification failed:", error.message);
-        return res.status(403).json({ status: "Invalid Token", error: error.message });
-      }
-  
-      console.log("Token is valid for:", decoded.email);
-  
-      try {
-        const review = await reviewModel.find();
-        console.log("Review retrieved successfully:", review.length);
-        res.json(review);
-      } catch (err) {
-        console.error("Database error:", err);
-        res.status(500).json({ status: "Error fetching review" });
-      }
-    })
-  })
-
-
-// My Profile
-app.post("/myprofile", async (req, res) => {
-    let token = req.headers.token;
-
-    if (!token) {
-        console.log("No token provided");
-        return res.status(401).json({ status: "Token is missing" });
-    }
-
-    jwt.verify(token, "CharityApp", async (error, decoded) => {
-        if (error) {
-            console.log("JWT verification failed:", error.message);
-            return res.status(403).json({ status: "Invalid Token", error: error.message });
-        }
-
-        console.log("Fetching profile for:", decoded.email);
-
-        try {
-            const user = await userModel.findOne({ email: decoded.email });
-            if (!user) {
-                return res.status(404).json({ status: "User not found" });
-            }
-
-            console.log("User profile retrieved:", user);
-            res.json(user);
-        } catch (err) {
-            console.error("Database error:", err);
-            res.status(500).json({ status: "Error fetching user profile" });
-        }
-    });
-});
-
-
-//EditProfile Modal
-
-app.put("/editprofilemodal", async (req, res) => {
-    console.log("Received update request:", req.body);
-
-    let token = req.headers.token;
-    if (!token) {
-        console.log("No token provided");
-        return res.status(401).json({ status: "Token is missing" });
-    }
-
-    jwt.verify(token, "CharityApp", async (error, decoded) => {
-        if (error) {
-            console.log("JWT verification failed:", error.message);
-            return res.status(403).json({ status: "Invalid Token", error: error.message });
-        }
-
-        console.log("Updating profile for:", decoded.email);
-
-        try {
-            const updatedUser = await userModel.findOneAndUpdate(
-                { email: decoded.email },  // Find user by email
-                { $set: req.body },         // Update user with new data
-                { new: true }               // Return updated document
-            );
-
-            if (!updatedUser) {
-                console.log("User not found");
-                return res.status(404).json({ status: "User not found" });
-            }
-
-            console.log("Profile updated successfully:", updatedUser);
-            res.json({ status: "Success", user: updatedUser });
-        } catch (err) {
-            console.error("Database error:", err);
-            res.status(500).json({ status: "Error updating profile" });
-        }
-    });
-});
-
-
 //Social Workers Login
-
 app.post("/socialworkerslogin", async (req, res) => {
     try {
         let user = await socialworkersModel.findOne({ email: req.body.email });
@@ -437,6 +176,92 @@ app.post("/socialworkerslogin", async (req, res) => {
     }
 });
 
+//-----------------------------------------------------ADMIN DASHBOARD------------------------------------------------------------------------
+
+//Admin Dashboard
+app.post("/api/admindashboard", async (req, res) => {
+    try {
+      // Fetching statistics
+      const usersCount = await userModel.countDocuments();
+      const socialWorkersCount = await socialworkersModel.countDocuments();
+      
+      // Count reports that are "pending approval" (assuming the status is a field in your reviewModel)
+      const pendingReportsCount = await postModel.countDocuments({ status: "pending" }); // Change "pending" to whatever status represents pending approvals in your model
+  
+      // Feedback count remains the same (assuming feedback has no status check)
+      const donationCount = await paymentModel.countDocuments(); // Assuming feedback is stored in reviewModel
+  
+      res.json({
+        users: usersCount,
+        socialWorkers: socialWorkersCount,
+        pendingApprovals: pendingReportsCount, // Return the count of pending approvals
+        donation: donationCount
+      });
+  
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ status: "Error", message: "Failed to fetch dashboard stats" });
+    }
+  });
+  
+//User Activity
+app.post("/api/useractivity", async (req, res) => {
+    try {
+        const last7Days = new Date();
+        last7Days.setDate(last7Days.getDate() - 7);
+
+        const activity = await userModel.aggregate([
+            {
+                $match: { createdAt: { $gte: last7Days } } // Ensure createdAt is present
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, // Format date
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        console.log("User Activity Data:", activity); // Debugging: Check if data is retrieved
+
+        res.json(activity.length > 0 ? activity.map(item => ({ date: item._id, count: item.count })) : []);
+
+    } catch (error) {
+        console.error("Error fetching user activity:", error);
+        res.status(500).json({ status: "Error", message: "Failed to fetch user activity" });
+    }
+});
+
+//Manage Users
+app.post("/manageusers", async (req, res) => {
+    let token = req.headers.token;
+  
+    if (!token) {
+      console.log("No token provided");
+      return res.status(401).json({ status: "Token is missing" });
+    }
+  
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+      if (error) {
+        console.log("JWT verification failed:", error.message);
+        return res.status(403).json({ status: "Invalid Token", error: error.message });
+      }
+  
+      console.log("Token is valid for:", decoded.email);
+  
+      try {
+        const users = await userModel.find();
+        console.log("Users retrieved successfully:", users.length);
+        res.json(users);
+      } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ status: "Error fetching users" });
+      }
+    })
+  })
 
 //Manage Social Workers
 app.post("/managesocialworkers", async(req,res)=> {
@@ -455,6 +280,35 @@ app.post("/managesocialworkers", async(req,res)=> {
 
 })
 
+//Manage Users
+app.post("/manageusers", async (req, res) => {
+    let token = req.headers.token;
+  
+    if (!token) {
+      console.log("No token provided");
+      return res.status(401).json({ status: "Token is missing" });
+    }
+  
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+      if (error) {
+        console.log("JWT verification failed:", error.message);
+        return res.status(403).json({ status: "Invalid Token", error: error.message });
+      }
+  
+      console.log("Token is valid for:", decoded.email);
+  
+      try {
+        const users = await userModel.find();
+        console.log("Users retrieved successfully:", users.length);
+        res.json(users);
+      } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ status: "Error fetching users" });
+      }
+    })
+  })
+
+//Retrieve Social Workers
 app.post("/retrievesocialworkers", async (req, res) => {
     let token = req.headers.authorization?.split(" ")[1]; //  Extract token from "Bearer <token>"
   
@@ -482,46 +336,424 @@ app.post("/retrievesocialworkers", async (req, res) => {
     });
   });
 
+//Manage Review
+app.post("/managereview", async (req, res) => {
+    let token = req.headers.token;
   
-  // Make Payment
+    if (!token) {
+      console.log("No token provided");
+      return res.status(401).json({ status: "Token is missing" });
+    }
+  
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+      if (error) {
+        console.log("JWT verification failed:", error.message);
+        return res.status(403).json({ status: "Invalid Token", error: error.message });
+      }
+  
+      console.log("Token is valid for:", decoded.email);
+  
+      try {
+        const review = await reviewModel.find();
+        console.log("Review retrieved successfully:", review.length);
+        res.json(review);
+      } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ status: "Error fetching review" });
+      }
+    })
+  })
 
-  app.post("/makepayment", async (req, res) => {
-    const { userId, postId, amount, method } = req.body;
+//Pending Posts
+app.post("/pendingposts", async (req, res) => {
+    try {
+        const posts = await postModel
+            .find({ status: "pending" });
+
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch pending posts" });
+    }
+});
+
+//Admin Approval
+app.post("/approvepost", async (req, res) => {
+    const { postId, action, rejectionReason } = req.body;
 
     try {
-        // ✅ Step 1: Create Payment Entry in MongoDB 💸
-        const payment = await paymentModel.create({
-            userId,
-            postId,
-            amount,
-            method,
-            status: 'pending'  // ✅ Initially keep it 'pending' until processed
+        if (action === 'approve') {
+            // ✅ Approve the Post
+            const post = await postModel.findById(postId);
+            if (!post) {
+                return res.json({ message: "❌ Post not found" });
+            }
+
+            post.status = "approved";
+            await post.save();
+
+            // ✅ Fetch Pending Donations with No Assigned Post
+            const pendingDonations = await gameDonationModel.find({ status: "pending", postId: null });
+
+            let totalAllocated = 0;
+            let totalPlatformFee = 0;
+
+            for (const donation of pendingDonations) {
+                const charityAmount = donation.amount * 0.7;  // 70% for charity
+                const platformFee = donation.amount * 0.1;   // 10% for platform
+                const remaining = donation.amount * 0.2;     // 20% for rewards
+
+                // ✅ Assign Donation to the Approved Post
+                donation.postId = post._id;
+                donation.status = "success";
+                await donation.save();
+
+                // ✅ Update Post's Donation Amount (Only 70%)
+                totalAllocated += charityAmount;
+                totalPlatformFee += platformFee;
+            }
+
+            post.currentDonationsReceived += totalAllocated;
+            if (post.currentDonationsReceived >= post.requiredAmount) {
+                post.status = 'funded';  // Mark as fully funded if goal reached
+            }
+            await post.save();
+
+            return res.json({ 
+                message: `✅ Post approved! Allocated ₹${totalAllocated} to charity. 
+                          Platform Fee: ₹${totalPlatformFee}.`
+            });
+        }
+
+        if (action === 'reject') {
+            await postModel.findByIdAndUpdate(postId, { status: 'Rejected', rejectionReason });
+            return res.json({ message: "❌ Post rejected successfully" });
+        }
+
+    } catch (error) {
+        console.error("❌ Approval Error:", error);
+        res.status(500).json({ message: "Failed to approve/reject post" });
+    }
+});
+
+
+
+//-----------------------------------------------------ADMIN DASHBOARD------------------------------------------------------------------------
+
+//-----------------------------------------------------USER DASHBOARD-------------------------------------------------------------------------
+
+//Post a Review
+app.post("/review", async (req, res) => {
+    let { review, rating } = req.body;
+    let token = req.headers.authorization?.split(" ")[1]; // Extract Bearer token
+
+    if (!review || review.trim() === "") {
+        return res.status(400).json({ status: "Error", message: "Review is required" });
+    }
+    if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ status: "Error", message: "Rating must be between 1 and 5" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, "CharityApp");
+        const user = await userModel.findOne({ email: decoded.email });
+
+        if (!user) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+
+        let newReview = new reviewModel({
+            userId: user._id,
+            review,
+            rating,
+            email: user.email
         });
 
-        // ✅ Step 2: Find the Post Where Payment Was Made
+        await newReview.save();
+        res.status(201).json({ status: "Success", message: "Review submitted successfully" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(401).json({ status: "Error", message: "Invalid Token" });
+    }
+});
+
+//My Profile
+app.post("/myprofile", async (req, res) => {
+    let token = req.headers.token;
+
+    if (!token) {
+        console.log("No token provided");
+        return res.status(401).json({ status: "Token is missing" });
+    }
+
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+        if (error) {
+            console.log("JWT verification failed:", error.message);
+            return res.status(403).json({ status: "Invalid Token", error: error.message });
+        }
+
+        console.log("Fetching profile for:", decoded.email);
+
+        try {
+            const user = await userModel.findOne({ email: decoded.email });
+            if (!user) {
+                return res.status(404).json({ status: "User not found" });
+            }
+
+            console.log("User profile retrieved:", user);
+            res.json(user);
+        } catch (err) {
+            console.error("Database error:", err);
+            res.status(500).json({ status: "Error fetching user profile" });
+        }
+    });
+});
+
+
+//EditProfile Modal
+app.put("/editprofilemodal", async (req, res) => {
+    console.log("Received update request:", req.body);
+
+    let token = req.headers.token;
+    if (!token) {
+        console.log("No token provided");
+        return res.status(401).json({ status: "Token is missing" });
+    }
+
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+        if (error) {
+            console.log("JWT verification failed:", error.message);
+            return res.status(403).json({ status: "Invalid Token", error: error.message });
+        }
+
+        console.log("Updating profile for:", decoded.email);
+
+        try {
+            const updatedUser = await userModel.findOneAndUpdate(
+                { email: decoded.email },  // Find user by email
+                { $set: req.body },         // Update user with new data
+                { new: true }               // Return updated document
+            );
+
+            if (!updatedUser) {
+                console.log("User not found");
+                return res.status(404).json({ status: "User not found" });
+            }
+
+            console.log("Profile updated successfully:", updatedUser);
+            res.json({ status: "Success", user: updatedUser });
+        } catch (err) {
+            console.error("Database error:", err);
+            res.status(500).json({ status: "Error updating profile" });
+        }
+    });
+});
+
+//Game Payment
+app.post("/gamepayment", async (req, res) => {
+    try {
+        const { method } = req.body;
+        const fixedAmount = 2;  // ₹2 Fixed Payment
+
+        // ✅ Validate User Token
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) {
+            return res.status(401).json({ status: "Error", message: "Token is missing! Unauthorized access" });
+        }
+
+        const decoded = jwt.verify(token, "CharityApp");
+        const userId = decoded.userId;
+
+        // ✅ Store Payment in Database with "pending" status
+        const payment = await gameDonationModel.create({
+            userId,
+            amount: fixedAmount,
+            method,
+            status: "pending"
+        });
+
+        console.log("✅ Game Donation Stored:", payment);
+
+        // ✅ Emit an event to process donation allocation
+        paymentEvents.emit('allocateDonation', payment);
+
+        return res.status(200).json({
+            status: "Success",
+            message: "Dummy Payment Processed",
+            paymentId: payment._id // ✅ Fixed incorrect property name
+        });
+
+    } catch (error) {
+        console.error("❌ Payment Error:", error);
+        return res.status(500).json({ status: "Failed", message: "Payment Failed" });
+    }
+});
+paymentEvents.on('allocateDonation', async (payment) => {
+    console.log("🚀 Event Triggered: allocateDonation with payment ID:", payment._id);
+
+    try {
+        console.log("🔄 Processing donation allocation...");
+
+        const donationAmount = payment.amount * 0.7; // 70% of the payment
+
+        // ✅ Find an approved charity post that still needs funds
+        const charityPost = await postModel.findOne({
+            status: "approved",
+            $expr: { $gt: ["$requiredAmount", "$currentDonationsReceived"] } // Check if requiredAmount > currentDonationsReceived
+        }).sort({ requiredAmount: -1 });
+
+        if (charityPost) {
+            console.log(`✅ Charity Post Found: ${charityPost._id}, Adding ₹${donationAmount}`);
+
+            // ✅ Add donation to the charity post
+            charityPost.currentDonationsReceived += donationAmount;
+            await charityPost.save();
+
+            // ✅ Update payment status to "success"
+            payment.status = "success";
+            await payment.save();
+
+            console.log(`✅ ₹${donationAmount} donated to charity post: ${charityPost._id}`);
+        } else {
+            console.log("⚠️ No eligible charity post found, keeping donation pending.");
+
+            // ✅ Keep donation pending so it can be allocated later
+            payment.status = "pending";
+            await payment.save();
+        }
+    } catch (error) {
+        console.error("❌ Donation Allocation Error:", error);
+    }
+});
+
+async function approvePost(postId) {
+    try {
         const post = await postModel.findById(postId);
         if (!post) {
+            console.log("❌ Post not found.");
+            return;
+        }
+
+        // ✅ Update the status to "approved"
+        post.status = "approved";
+        await post.save();
+        console.log(`✅ Post ${postId} approved successfully.`);
+
+        // 🔄 Allocate pending donations to the newly approved post
+        await allocatePendingDonations();
+
+    } catch (error) {
+        console.error("❌ Error approving post:", error);
+    }
+}
+
+async function allocatePendingDonations() {
+    console.log("🔄 Checking for pending donations...");
+
+    // ✅ Get all pending donations
+    const pendingDonations = await paymentModel.find({ status: "pending" });
+
+    if (pendingDonations.length === 0) {
+        console.log("✅ No pending donations found.");
+        return;
+    }
+
+    // ✅ Find an approved charity post that still needs funds
+    const charityPost = await postModel.findOne({
+        status: "approved",
+        $expr: { $gt: ["$requiredAmount", "$currentDonationsReceived"] }
+    }).sort({ createdAt: 1 }); // Prioritize the oldest post
+
+    if (!charityPost) {
+        console.log("⚠️ No eligible charity post found for pending donations.");
+        return;
+    }
+
+    for (const payment of pendingDonations) {
+        const donationAmount = payment.amount * 0.7; // 70% of the payment
+
+        console.log(`✅ Allocating ₹${donationAmount} from payment ${payment._id} to charity post ${charityPost._id}`);
+
+        // ✅ Add donation to the charity post
+        charityPost.currentDonationsReceived += donationAmount;
+        await charityPost.save();
+
+        // ✅ Update payment status to "success"
+        payment.status = "success";
+        await payment.save();
+    }
+
+    console.log("🎉 All pending donations have been allocated!");
+} 
+
+// Configure Brevo API Key
+const brevoApiKey = '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';
+SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = brevoApiKey;
+
+// Make Payment 
+app.post("/makepayment", async (req, res) => {
+    const { postId, amount, method } = req.body;
+    
+    console.log("🔍 Received Payment Request:", req.body); // Debugging Log
+
+    // ✅ Validate User Token
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+        return res.status(401).json({ status: "Error", message: "Token is missing! Unauthorized access" });
+    }
+
+    const decoded = jwt.verify(token, "CharityApp");
+    const userId = decoded.userId; // Extract userId from decoded token
+
+    // Validate postId
+    if (!postId || !Mongoose.Types.ObjectId.isValid(postId)) {
+        console.log("❌ Invalid Post ID:", postId);
+        return res.status(400).json({ status: "Failed", message: "Invalid or missing Post ID" });
+    }
+
+    // Validate amount
+    if (!amount || isNaN(amount) || amount <= 0) {
+        console.log("❌ Invalid Amount:", amount);
+        return res.status(400).json({ status: "Failed", message: "Invalid or missing amount" });
+    }
+
+    // Validate method
+    if (!method) {
+        console.log("❌ Missing Payment Method:", method);
+        return res.status(400).json({ status: "Failed", message: "Payment method is required" });
+    }
+
+    try {
+        const post = await postModel.findById(postId);
+        if (!post) {
+            console.log("❌ Post Not Found:", postId);
             return res.status(404).json({ status: "Failed", message: "Post not found" });
         }
 
-        // ✅ Step 3: Add The Amount To Collected Donations 💰
-        post.currentDonationsReceived += Number(amount);
-
-        // ✅ Step 4: Check If Target Amount is Reached, Auto-Approve Post 💸
-        if (post.currentDonationsReceived >= post.requiredAmount) {
-            post.status = 'approved';  // ✅ Auto-Approve if donation goal is met
+        // Check if the donation exceeds required amount
+        if (post.currentDonationsReceived + Number(amount) > post.requiredAmount) {
+            return res.status(400).json({
+                status: "Failed",
+                message: "Donation exceeds required amount. Try a smaller amount."
+            });
         }
 
-        // ✅ Step 5: Save Post Update in MongoDB 💾
-        await post.save();
+        // Create the payment record
+        const payment = await paymentModel.create({
+            userId,  // Use the userId from the decoded token
+            postId,
+            amount,
+            method,
+            status: 'pending'
+        });
 
-        // ✅ Step 6: Return Payment Success Response Along with Payment ID 💯
+        console.log("✅ Payment Created Successfully:", payment);
+
         return res.status(200).json({
             status: "Success",
             message: "Payment Initiated Successfully",
             paymentId: payment._id
         });
-
     } catch (error) {
         console.error("❌ Payment Error:", error);
         return res.status(500).json({
@@ -532,19 +764,11 @@ app.post("/retrievesocialworkers", async (req, res) => {
     }
 });
 
-
-
-
-//Process Payment
-
-const brevoApiKey = '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';
-SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = brevoApiKey;
-
+// Process Payment Route with Email Integration
 app.post("/processpayment", async (req, res) => {
     const { paymentId } = req.body;
     const token = req.headers.authorization?.split(" ")[1];
 
-    // ✅ Step 1: Check Token
     if (!token) {
         return res.status(401).json({
             status: "Error",
@@ -553,10 +777,7 @@ app.post("/processpayment", async (req, res) => {
     }
 
     try {
-        // ✅ Step 2: Verify Token
         const decoded = jwt.verify(token, "CharityApp");
-
-        // ✅ Step 3: Find Payment
         const payment = await paymentModel.findById(paymentId);
         if (!payment) {
             return res.status(404).json({
@@ -565,7 +786,6 @@ app.post("/processpayment", async (req, res) => {
             });
         }
 
-        // ✅ Step 4: Check If Payment Already Processed
         if (payment.status === "success") {
             return res.status(200).json({
                 status: "Success",
@@ -573,7 +793,6 @@ app.post("/processpayment", async (req, res) => {
             });
         }
 
-        // ✅ Step 5: Find Related Post
         const post = await postModel.findById(payment.postId);
         if (!post) {
             return res.status(404).json({
@@ -582,25 +801,33 @@ app.post("/processpayment", async (req, res) => {
             });
         }
 
-        // ✅ Step 6: Mark Payment as Success
+        // Prevent Overpayment
+        if (post.currentDonationsReceived + Number(payment.amount) > post.requiredAmount) {
+            return res.status(400).json({
+                status: "Error",
+                message: "Donation target already reached or this payment exceeds the required amount."
+            });
+        }
+
+        // ✅ Step 1: Mark Payment as Success
         payment.status = "success";
         await payment.save();
 
-        // ✅ Step 7: Add Donation to Post
+        // ✅ Step 2: Update Post Donations
         post.currentDonationsReceived += Number(payment.amount);
         if (post.currentDonationsReceived >= post.requiredAmount) {
+            post.currentDonationsReceived = post.requiredAmount;
             post.status = 'approved';
         }
         await post.save();
 
-        // ✅ Step 8: Generate PDF Receipt Using pdf-lib
+        // ✅ Step 3: Generate PDF Receipt
         const pdfDoc = await PDFDocument.create();
         const page = pdfDoc.addPage([600, 400]);
         const { width, height } = page.getSize();
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-        // ✅ Add Text To PDF
         const fontSize = 12;
+
         page.drawText('Payment Receipt', {
             x: 200,
             y: height - 50,
@@ -615,45 +842,48 @@ app.post("/processpayment", async (req, res) => {
         page.drawText(`Payment Status: ${payment.status}`, { x: 50, y: height - 160, size: fontSize, font });
         page.drawText(`Date & Time: ${new Date(payment.createdAt).toLocaleString()}`, { x: 50, y: height - 180, size: fontSize, font });
 
-        // ✅ Convert PDF to Buffer
         const pdfBytes = await pdfDoc.save();
         const pdfBuffer = Buffer.from(pdfBytes);
 
-        // ✅ Step 9: Send Email Using Brevo
-        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-        sendSmtpEmail.subject = "Payment Receipt - Thank You for Your Donation!";
-        sendSmtpEmail.htmlContent = `
-            <h3>Dear Donor,</h3>
-            <p>Thank you for your generous donation of ₹${payment.amount}.</p>
-            <p>Please find the attached payment receipt for your reference.</p>
-            <p><strong>Transaction ID:</strong> ${payment._id}</p>
-            <p><strong>Payment Method:</strong> ${payment.method}</p>
-            <p><strong>Date:</strong> ${new Date(payment.createdAt).toLocaleString()}</p>
-            <p>We sincerely appreciate your support.</p>
-            <br>
-            <p>Regards,</p>
-            <p><strong>CharityApp Team</strong></p>
-        `;
-        sendSmtpEmail.sender = { name: "CharityApp", email: "charityapp2025@gmail.com" };
-        sendSmtpEmail.to = [{ email: decoded.email }];
-
-        // ✅ Attach the PDF Receipt
-        sendSmtpEmail.attachment = [{
-            content: pdfBuffer.toString('base64'),
-            name: `Receipt_${payment._id}.pdf`
-        }];
-
-        // ✅ Send Email
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
-
-        // ✅ Return Success Response
-        return res.status(200).json({
+        // ✅ Step 4: Return Success Response BEFORE Sending Email
+        res.status(200).json({
             status: "Success",
-            message: "Payment successfully processed & receipt emailed!",
+            message: "Payment successfully processed! Receipt will be sent via email.",
             paymentId: payment._id
         });
+
+        // ✅ Step 5: Send Email in the Background (Separate Process)
+        try {
+            const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+            const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+            sendSmtpEmail.subject = "Payment Receipt - Thank You for Your Donation!";
+            sendSmtpEmail.htmlContent = `
+                <h3>Dear Donor,</h3>
+                <p>Thank you for your generous donation of ₹${payment.amount}.</p>
+                <p>Please find the attached payment receipt for your reference.</p>
+                <p><strong>Transaction ID:</strong> ${payment._id}</p>
+                <p><strong>Payment Method:</strong> ${payment.method}</p>
+                <p><strong>Date:</strong> ${new Date(payment.createdAt).toLocaleString()}</p>
+                <p>We sincerely appreciate your support.</p>
+                <br>
+                <p>Regards,</p>
+                <p><strong>CharityApp Team</strong></p>
+            `;
+
+            sendSmtpEmail.sender = { name: "CharityApp", email: "charityapp2025@gmail.com" };
+            sendSmtpEmail.to = [{ email: decoded.email }];
+
+            sendSmtpEmail.attachment = [{
+                content: pdfBuffer.toString('base64'),
+                name: `Receipt_${payment._id}.pdf`
+            }];
+
+            await apiInstance.sendTransacEmail(sendSmtpEmail);
+            console.log(`✅ Email sent successfully to ${decoded.email}`);
+        } catch (emailError) {
+            console.error("❌ Email Sending Error:", emailError);
+        }
 
     } catch (error) {
         console.error("❌ Payment Processing Error:", error);
@@ -663,11 +893,8 @@ app.post("/processpayment", async (req, res) => {
         });
     }
 });
-  
 
-
-
-// ✅ 2. DOWNLOAD RECEIPT API 🚀💯🔥
+//Download Receipt
 app.post("/downloadreceipt", async (req, res) => {
     let { paymentId } = req.body;
     let token = req.headers.authorization?.split(" ")[1];
@@ -721,9 +948,7 @@ app.post("/downloadreceipt", async (req, res) => {
     }
 });
 
-
-
-// ✅ GET USER PAYMENT HISTORY USING POST 💣🔥
+//Get User Payment History
 app.post("/getuserpayment", async (req, res) => {
     let token = req.headers.authorization?.split(" ")[1];
 
@@ -745,12 +970,10 @@ app.post("/getuserpayment", async (req, res) => {
     }
 });
 
-
+//-----------------------------------------------------SOCIAL WORKER DASHBOARD------------------------------------------------------------------
 
 //Add Post
-
-// ✅ Multer Configuration
-const storage = multer.diskStorage({
+const storage = multer.diskStorage({                // Multer Configuration
     destination: (req, file, cb) => {
         cb(null, './uploads');
     },
@@ -758,11 +981,8 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
-
 const upload = multer({ storage: storage });
 
-
-// ✅ ADD POST API (WITHOUT ROUTER 💯)
 app.post("/addpost", (req, res) => {
     // ✅ Upload File without Overwriting Body
     upload.single('file')(req, res, async (err) => {
@@ -811,7 +1031,7 @@ app.post("/addpost", (req, res) => {
     });
 });
 
-
+//Get Social Worker Posts
 app.post('/getSocialWorkerPosts', async (req, res) => {
     const { email } = req.body; // Retrieve the email from the POST body
   
@@ -829,52 +1049,6 @@ app.post('/getSocialWorkerPosts', async (req, res) => {
       res.status(500).json({ message: 'Failed to fetch posts' });
     }
   });
-
-  
-
-//Pending Posts
-app.post("/pendingposts", async (req, res) => {
-    try {
-        const posts = await postModel
-            .find({ status: "pending" });
-
-        res.json(posts);
-    } catch (error) {
-        res.status(500).json({ status: "Error", message: "Failed to fetch pending posts" });
-    }
-});
-
-
-//Admin Approval
-app.post("/approvepost", async (req, res) => {
-    const { postId, action, rejectionReason } = req.body;
-
-    try {
-        // ✅ Hardcoded admin email for testing
-        const email = 'admin@gmail.com';  // Hardcoded admin email for testing
-
-        // ✅ Directly approve or reject the post without checking role
-        if (action === 'approve') {
-            await postModel.findByIdAndUpdate(postId, { status: 'approved' });
-            return res.json({ message: "✅ Post approved successfully" });
-        }
-
-        if (action === 'reject') {
-            await postModel.findByIdAndUpdate(postId, {
-                status: 'Rejected',
-                rejectionReason
-            });
-            return res.json({ message: "❌ Post rejected successfully" });
-        }
-
-    } catch (error) {
-        res.status(500).json({ message: "Failed to approve/reject post" });
-    }
-});
-
-
-
-
 
 //Approved Posts
 app.post("/approvedposts", async (req, res) => {
@@ -903,9 +1077,188 @@ app.post("/rejectedposts", async (req, res) => {
     }
 });
 
+//-----------------------------------------------------SOCIAL WORKER DASHBOARD------------------------------------------------------------------
+ 
+//-----------------------------------------------------GAMES AND LEADERSHIP---------------------------------------------------------------------
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!QUIZ
+app.post("/api/saveQuizScore", async (req, res) => {
+    try {
+        const { score } = req.body;
+
+        console.log("🟡 Received score:", score); // Debugging log
+
+        if (score === undefined || score === null) {
+            return res.status(400).json({ message: "Score is required!" });
+        }
+
+        // Ensure score is a number
+        if (typeof score !== "number") {
+            return res.status(400).json({ message: "Invalid score type. Must be a number!" });
+        }
+
+        // Extract user ID from token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ status: "Error", message: "Token missing or invalid!" });
+        }
+        const token = authHeader.split(" ")[1];
+        let decoded;
+        try {
+            decoded = jwt.verify(token, "CharityApp");
+        } catch (error) {
+            return res.status(401).json({ status: "Error", message: "Invalid or expired token!" });
+        }
+        const userId = decoded.userId;
+
+        console.log("🟢 Storing score:", score, "for user:", userId);
+
+        // ✅ Save the quiz score
+        const newQuiz = new quizModel({ userId, score });
+        await newQuiz.save();
+
+        console.log("✅ Saved score in DB:", newQuiz.score); // Log stored value
+
+        res.status(201).json({ message: "Quiz score saved successfully!", newQuiz });
+    } catch (error) {
+        console.error("❌ Error saving quiz score:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.get("/api/getUserQuizScores", async (req, res) => {
+    try {
+        // ✅ Validate User Token
+        const token = req.headers.authorization;
+        if (!token || !token.startsWith("Bearer ")) {
+            return res.status(401).json({ status: "Error", message: "Invalid or missing token! Unauthorized access" });
+        }
+
+        const decoded = jwt.verify(token.split(" ")[1], "CharityApp");
+        const userId = decoded.userId; // Extract userId from token
+
+        if (!userId) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        // ✅ Fetch quiz scores from MongoDB
+        const scores = await quizModel.find({ userId }).sort({ createdAt: -1 });
+
+        res.json(scores);
+    } catch (error) {
+        console.error("❌ Error fetching user quiz scores:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.get("/api/getQuizLeader", async (req, res) => {
+    try {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0); // Midnight today
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999); // End of today
+
+        // Fetch today's scores, sorted by highest score
+        const quizLeaderboard = await quizModel
+            .find({ createdAt: { $gte: startOfDay, $lte: endOfDay } }) // Filter for today's records
+            .populate("userId", "username") // Get player names from User collection
+            .sort({ score: -1, createdAt: 1 }) // Highest score first, older entry wins tie
+            .limit(10); // Show top 10
+
+        res.json({ quizLeaderboard });
+    } catch (error) {
+        console.error("❌ Error fetching quiz leaderboard:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
 
 
-  
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!GUESS THE NUMBER
+app.post("/api/saveGuessTheNumberScore", async (req, res) => {
+    try {
+        const { attempts } = req.body;
+
+        // ✅ Validate User Token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ status: "Error", message: "Token is missing or invalid!" });
+        }
+
+        const token = authHeader.split(" ")[1]; // Extract actual token
+        let decoded;
+
+        try {
+            decoded = jwt.verify(token, "CharityApp");
+        } catch (error) {
+            return res.status(401).json({ status: "Error", message: "Invalid or expired token!" });
+        }
+
+        const userId = decoded.userId; // Extract userId from token
+
+        if (!attempts) {
+            return res.status(400).json({ message: "Attempts are required" });
+        }
+
+        const newGame = new guessTheNumberModel({ userId, attempts });
+        await newGame.save();
+
+        res.status(201).json({ message: "Game attempt saved successfully", newGame });
+    } catch (error) {
+        console.error("❌ Error saving game attempt:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.get("/api/getUserAttempts", async (req, res) => {
+    try {
+        // ✅ Validate User Token
+        const token = req.headers.authorization;
+        if (!token || !token.startsWith("Bearer ")) {
+            return res.status(401).json({ status: "Error", message: "Invalid or missing token! Unauthorized access" });
+        }
+
+        const decoded = jwt.verify(token.split(" ")[1], "CharityApp");
+        const userId = decoded.userId; // Extract userId from token
+
+        if (!userId) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        // ✅ Fetch attempts from MongoDB
+        const attempts = await guessTheNumberModel.find({ userId }).sort({ createdAt: -1 });
+
+        res.json(attempts);
+    } catch (error) {
+        console.error("❌ Error fetching user attempts:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.get("/api/getGuessTheNumberLeader", async (req, res) => {
+    try {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0); // Midnight today
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999); // End of today
+
+        // Fetch only today's scores, sorted by lowest attempts
+        const guessTheNumberLeader = await guessTheNumberModel
+            .find({ createdAt: { $gte: startOfDay, $lte: endOfDay } }) // Filter today's records
+            .populate("userId", "username") // Get player names
+            .sort({ attempts: 1 }) // Lowest attempts first
+            .limit(10); // Show top 10
+
+        res.json({ guessTheNumberLeader });
+    } catch (error) {
+        console.error("❌ Error fetching leaderboard:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+
+//-----------------------------------------------------GAMES AND LEADERSHIP---------------------------------------------------------------------
+
 app.listen(3030, () =>{
     console.log("Server Started")
 })
