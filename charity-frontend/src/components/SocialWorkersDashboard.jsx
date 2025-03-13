@@ -60,14 +60,14 @@ const SocialWorkersDashboard = () => {
               {posts.map((post) => (
                 <div key={post._id} className="col-sm-4 mb-3">
                   <div className="card">
-                    <img className="card-img-top" src={`http://localhost:3030/${post.image}`} alt={post.title} />
-                    <div className="card-body">
-                      <h5 className="card-title">{post.title}</h5>
-                      <p className="card-text">{post.name}</p>
-                      <p className="card-text">{post.status}</p>
+                      <h3 className="card-title">{post.title}</h3>
+                      <p className="card-text">Name: {post.name}</p>
+                      <p className="card-text">Required: ₹{post.requiredAmount}</p>
+                      <h5 className="card-text">Status: {post.status}</h5>
+                      <h5 className="card-title">Collected: {post.currentDonationsReceived
+                      }</h5>
                     </div>
                   </div>
-                </div>
               ))}
             </div>
           )}

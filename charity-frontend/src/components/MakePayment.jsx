@@ -10,11 +10,30 @@ const MakePayment = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
+
+    // ✅ Fetch userId from sessionStorage
+    const userId = sessionStorage.getItem("userId");
+   
+
+
+    // ❌ If user is not logged in, show an alert and redirect to login
+    if (!userId) {
+      alert("Session expired! Please log in again.");
+      navigate("/login");
+      return;
+    }
+
+    // ❌ Validate input amount
     if (!amount || amount <= 0) {
       alert("Enter a valid amount");
       return;
     }
-    navigate(`/paymentdetails/${method}/${amount}/${postId}`);  // ✅ Pass post ID in URL
+
+    // ✅ Store userId in sessionStorage again (just in case)
+    sessionStorage.setItem("userId", userId);
+
+    // ✅ Pass postId in URL
+    navigate(`/paymentdetails/${method}/${amount}/${postId}`);
   };
 
   return (

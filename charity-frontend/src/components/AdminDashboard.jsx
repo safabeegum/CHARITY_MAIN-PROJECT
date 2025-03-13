@@ -3,7 +3,8 @@ import AdminNavbar from './AdminNavbar';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faUsers, faHandsHelping, faFileAlt, faComments } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faUsers, faHandsHelping, faHourglassHalf, faCheckCircle, 
+         faTimesCircle, faHandHoldingHeart, faGamepad, faMoneyCheckAlt, faComments } from '@fortawesome/free-solid-svg-icons';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
@@ -19,7 +20,7 @@ const AdminDashboard = () => {
   });
 
   const [userActivity, setUserActivity] = useState([]);
-  const [socialWorkerActivity, setSocialWorkerActivity] = useState([]); // ✅ Added new state for social worker registrations
+  const [socialWorkerActivity, setSocialWorkerActivity] = useState([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -40,9 +41,11 @@ const AdminDashboard = () => {
       }
     };
 
+
+
     const fetchSocialWorkerActivity = async () => {
       try {
-        const response = await axios.post('http://localhost:3030/api/socialworkeractivity'); // API for social worker activity
+        const response = await axios.post('http://localhost:3030/api/socialworkeractivity');
         setSocialWorkerActivity(response.data);
       } catch (error) {
         console.error("Error fetching social worker activity:", error);
@@ -51,7 +54,7 @@ const AdminDashboard = () => {
 
     fetchStats();
     fetchUserActivity();
-    fetchSocialWorkerActivity(); // ✅ Fetch social worker activity
+    fetchSocialWorkerActivity();
   }, []);
 
   // User Activity Chart Data
@@ -87,15 +90,20 @@ const AdminDashboard = () => {
       <AdminNavbar />
 
       <div className="row">
-        {/* Sidebar with updated UI */}
+        {/* Sidebar with updated icons */}
         <div className="col-sm-3 bg-white text-dark p-3 min-vh-100 border-end">
           <ul className="nav flex-column">
             {[
               { href: "/admindashboard", icon: faHome, label: "Home" },
               { href: "/manageusers", icon: faUsers, label: "Manage Users" },
               { href: "/managesocialworkers", icon: faHandsHelping, label: "Manage Social Workers" },
-              { href: "/pendingposts", icon: faFileAlt, label: "Pending Posts" },
-              { href: "/managereview", icon: faComments, label: "Manage Reviews" }
+              { href: "/pendingposts", icon: faHourglassHalf, label: "Pending Posts" },
+              { href: "/approvedposts", icon: faCheckCircle, label: "Approved Posts" },
+              { href: "/rejectedposts", icon: faTimesCircle, label: "Rejected Posts" },
+              { href: "/managedonations", icon: faHandHoldingHeart, label: "Manage Donations" },
+              { href: "/managegamefunds", icon: faGamepad, label: "Manage Game Funds" },
+              { href: "/managetransactions", icon: faMoneyCheckAlt, label: "Manage Transactions" },
+              { href: "/managereview", icon: faComments, label: "Manage Reports" }
             ].map((item, index) => (
               <li key={index} className="nav-item">
                 <a className="nav-link text-dark fw-bold d-flex align-items-center border-bottom py-3 px-2" href={item.href}
@@ -119,7 +127,7 @@ const AdminDashboard = () => {
               { title: "Users", value: stats.users, color: "bg-primary", desc: "Active Users" },
               { title: "Charity Organizations", value: stats.socialWorkers, color: "bg-success", desc: "Total Registered" },
               { title: "Pending Approvals", value: stats.pendingApprovals, color: "bg-warning", desc: "Pending Approval" },
-              { title: "Feedback", value: stats.feedback, color: "bg-danger", desc: "Unread Feedback" }
+              { title: "Donations", value: stats.donation, color: "bg-danger", desc: "Successful Donations" }
             ].map((card, index) => (
               <div key={index} className="col-md-3">
                 <div className={`card text-white ${card.color} mb-3`}>
@@ -135,7 +143,6 @@ const AdminDashboard = () => {
 
           {/* Charts Section */}
           <div className="row">
-            {/* User Activity Chart (Original Size Restored) */}
             <div className="col-md-8">
               <div className="card">
                 <div className="card-body">

@@ -1,7 +1,12 @@
-import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 
 const GameIndex = () => {
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedGame, setSelectedGame] = useState("");
+    const [upiID, setUpiID] = useState(""); // State for UPI input
+    const navigate = useNavigate();
+
     const styles = {
         indexMain: {
             width: "100%",
@@ -65,9 +70,55 @@ const GameIndex = () => {
             color: "black",
             transform: "scale(1.05)",
         },
+        modalOverlay: {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        modal: {
+            width: "400px",
+            background: "white",
+            padding: "20px",
+            borderRadius: "10px",
+            textAlign: "center",
+        },
+        modalButton: {
+            marginTop: "10px",
+            padding: "10px 20px",
+            border: "none",
+            backgroundColor: "green",
+            color: "white",
+            fontSize: "16px",
+            cursor: "pointer",
+            borderRadius: "5px",
+        },
+        closeButton: {
+            marginTop: "10px",
+            padding: "10px 20px",
+            border: "none",
+            backgroundColor: "red",
+            color: "white",
+            fontSize: "16px",
+            cursor: "pointer",
+            borderRadius: "5px",
+            marginLeft: "10px",
+        },
+        inputField: {
+            width: "90%",
+            padding: "8px",
+            marginTop: "10px",
+            fontSize: "16px",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+        },
     };
 
-    // List of games with correct paths
     const gameRoutes = {
         "QUIZ": "/quiz",
         "GUESS THE NUMBER": "/guessthenumber",
@@ -75,6 +126,51 @@ const GameIndex = () => {
         "SNAKE GAME": "/snakegame",
         "HANG MAN": "/hangman",
     };
+
+    const openModal = (game) => {
+        setSelectedGame(game);
+        setModalOpen(true);
+    };
+
+    const handlePayment = async () => {
+        if (upiID.trim() === "") {
+            alert("Please enter your UPI ID to proceed.");
+            return;
+        }
+    
+        try {
+            const token = sessionStorage.getItem("token"); // Fetch token from sessionStorage
+            if (!token) {
+                alert("Authentication error! Please log in again.");
+                return;
+            }
+    
+            // ✅ Send payment request to backend
+            const response = await fetch("http://localhost:3030/gamepayment", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ method: "UPI" }),
+            });
+    
+            const data = await response.json();
+            console.log("📌 Payment API Response:", data);
+    
+            if (data.status === "Success") {
+                alert("Payment Successful! Redirecting to game...");
+                setModalOpen(false);
+                navigate(gameRoutes[selectedGame]);
+            } else {
+                alert("Payment Failed! Try again.");
+            }
+        } catch (error) {
+            console.error("❌ Payment Error:", error);
+            alert("Server error! Try again later.");
+        }
+    };
+    
 
     return (
         <>
@@ -84,9 +180,8 @@ const GameIndex = () => {
                     <h2 style={styles.indexSubHead}>PLAY YOUR FAVOURITE GAME!</h2>
                     <div style={styles.gameBtns}>
                         {Object.entries(gameRoutes).map(([gameName, path], index) => (
-                            <Link
+                            <div
                                 key={index}
-                                to={path}
                                 style={styles.buttonStyle}
                                 onMouseOver={(e) => {
                                     e.currentTarget.style.backgroundColor = styles.buttonHover.backgroundColor;
@@ -96,9 +191,10 @@ const GameIndex = () => {
                                     e.currentTarget.style.backgroundColor = "";
                                     e.currentTarget.style.color = "white";
                                 }}
+                                onClick={() => openModal(gameName)} // Open modal on click
                             >
                                 {gameName}
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -106,6 +202,28 @@ const GameIndex = () => {
                 <a href="/userdashboard" className="btn btn-dark">BACK TO HOME</a>
             </div>
             <Outlet />
+
+            {modalOpen && (
+                <div style={styles.modalOverlay}>
+                    <div style={styles.modal}>
+                        <h3>Payment Required</h3>
+                        <p>Pay Rs 2 to play {selectedGame}</p>
+                        
+                        {/* UPI Input Field */}
+                        <input
+                            type="text"
+                            placeholder="Enter UPI ID"
+                            value={upiID}
+                            onChange={(e) => setUpiID(e.target.value)}
+                            style={styles.inputField}
+                        />
+
+                        <br />
+                        <button style={styles.modalButton} onClick={handlePayment}>Pay</button>
+                        <button style={styles.closeButton} onClick={() => setModalOpen(false)}>Cancel</button>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

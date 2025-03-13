@@ -30,6 +30,9 @@ import PaymentDetails from './components/PaymentDetails';
 import PaymentHistory from './components/PaymentHistory';
 import AddPost from './components/AddPost';
 import PendingPosts from './components/PendingPosts';
+import LeadershipIndex from './components/LeadershipIndex';
+import GuessTheNumberLeader from './components/GuessTheNumberLeader';
+import QuizLeader from './components/QuizLeader';
 
 function App() {
   return (
@@ -53,7 +56,7 @@ function App() {
         <Route path='/addpost' element={<AddPost/>}/>
         <Route path='/usernavbar' element={<UserNavbar/>}/>
         <Route path='/userdashboard' element={<UserDashboard/>}/>
-        <Route path='/gameindex' element={<GameIndex/>}/>
+        <Route path="/gameindex" element={<GameIndex />} />
         <Route path='/makepayment/:postId' element={<MakePayment/>}/>
         <Route path='/paymentdetails/:method/:amount/:postId' element={<PaymentDetails/>}/>
         <Route path='/paymenthistory' element={<PaymentHistory/>}/>
@@ -67,6 +70,9 @@ function App() {
         <Route path='/tictactoe' element={<TicTacToe/>}/>
         <Route path='/snakegame' element={<SnakeGame/>}/>
         <Route path='/hangman' element={<Hangman/>}/>
+        <Route path='/leadership' element={<LeadershipIndex/>}/>
+        <Route path='/guessthenumberleader' element={<GuessTheNumberLeader/>}/>
+        <Route path='/quizleader' element={<QuizLeader/>}/>
         
       </Routes>
       </BrowserRouter>
