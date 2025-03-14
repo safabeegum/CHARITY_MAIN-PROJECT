@@ -2,14 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const SnakeGame = () => {
-  const generateFood = () => {
-    const x = Math.floor(Math.random() * gridSize);
-    const y = Math.floor(Math.random() * gridSize);
-    return { x, y };
-  };
-
   const gridSize = 10;
-  const WINNING_SCORE = 10;
   const [snake, setSnake] = useState([
     { x: 5, y: 5 },
     { x: 4, y: 5 },
@@ -18,38 +11,31 @@ const SnakeGame = () => {
   const [direction, setDirection] = useState("RIGHT");
   const [food, setFood] = useState(generateFood());
   const [gameOver, setGameOver] = useState(false);
-  const [gameWon, setGameWon] = useState(false);
   const [score, setScore] = useState(0);
-  const [shake, setShake] = useState(false); // Shake effect on lose
+  const [shake, setShake] = useState(false);
+
+  function generateFood() {
+    return { x: Math.floor(Math.random() * gridSize), y: Math.floor(Math.random() * gridSize) };
+  }
 
   useEffect(() => {
-    if (gameOver || gameWon) return;
+    if (gameOver) return;
     const interval = setInterval(() => {
       moveSnake();
     }, 200);
-
     return () => clearInterval(interval);
-  }, [snake, direction, gameOver, gameWon]);
+  }, [snake, direction, gameOver]);
 
   const moveSnake = () => {
     const newSnake = [...snake];
     const head = { ...newSnake[0] };
 
     switch (direction) {
-      case "UP":
-        head.y -= 1;
-        break;
-      case "DOWN":
-        head.y += 1;
-        break;
-      case "LEFT":
-        head.x -= 1;
-        break;
-      case "RIGHT":
-        head.x += 1;
-        break;
-      default:
-        break;
+      case "UP": head.y -= 1; break;
+      case "DOWN": head.y += 1; break;
+      case "LEFT": head.x -= 1; break;
+      case "RIGHT": head.x += 1; break;
+      default: break;
     }
 
     newSnake.unshift(head);
@@ -57,12 +43,6 @@ const SnakeGame = () => {
     if (head.x === food.x && head.y === food.y) {
       setFood(generateFood());
       setScore(score + 1);
-
-      if (score + 1 === WINNING_SCORE) {
-        setGameWon(true);
-        triggerWinEffect();
-        return;
-      }
     } else {
       newSnake.pop();
     }
@@ -70,55 +50,35 @@ const SnakeGame = () => {
     if (checkCollision(head)) {
       setGameOver(true);
       triggerShakeEffect();
+      saveScore(score); // ✅ Score saved only when game ends
     }
 
     setSnake(newSnake);
   };
 
   const checkCollision = (head) => {
-    if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) {
-      return true;
-    }
-
-    for (let i = 1; i < snake.length; i++) {
-      if (snake[i].x === head.x && snake[i].y === head.y) {
-        return true;
-      }
-    }
-    return false;
+    if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) return true;
+    return snake.some(segment => segment.x === head.x && segment.y === head.y);
   };
 
   const changeDirection = (e) => {
-    if (gameOver || gameWon) return;
-
-    switch (e.key) {
-      case "ArrowUp":
-        if (direction !== "DOWN") setDirection("UP");
-        break;
-      case "ArrowDown":
-        if (direction !== "UP") setDirection("DOWN");
-        break;
-      case "ArrowLeft":
-        if (direction !== "RIGHT") setDirection("LEFT");
-        break;
-      case "ArrowRight":
-        if (direction !== "LEFT") setDirection("RIGHT");
-        break;
-      default:
-        break;
+    if (gameOver) return;
+    const newDirection = e.key.replace("Arrow", "").toUpperCase();
+    if (["UP", "DOWN", "LEFT", "RIGHT"].includes(newDirection)) {
+      if (!(direction === "UP" && newDirection === "DOWN") &&
+          !(direction === "DOWN" && newDirection === "UP") &&
+          !(direction === "LEFT" && newDirection === "RIGHT") &&
+          !(direction === "RIGHT" && newDirection === "LEFT")) {
+        setDirection(newDirection);
+      }
     }
   };
 
   const restartGame = () => {
-    setSnake([
-      { x: 5, y: 5 },
-      { x: 4, y: 5 },
-      { x: 3, y: 5 },
-    ]);
+    setSnake([{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }]);
     setDirection("RIGHT");
     setFood(generateFood());
     setGameOver(false);
-    setGameWon(false);
     setScore(0);
     setShake(false);
   };
@@ -128,22 +88,41 @@ const SnakeGame = () => {
     return () => window.removeEventListener("keydown", changeDirection);
   }, [direction]);
 
-  const triggerWinEffect = () => {
-    alert("🎉 You Win! 🎉");
-  };
-
   const triggerShakeEffect = () => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
   };
 
+  const saveScore = async (finalScore) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        console.error("❌ No authentication token found!");
+        return;
+      }
+
+      console.log("📡 Sending Final Score:", finalScore);
+
+      const response = await fetch("http://localhost:3030/api/saveSnakeGameScore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ score: finalScore }),
+      });
+
+      const data = await response.json();
+      console.log("✅ Server Response:", data);
+
+      if (!response.ok) {
+        console.error("❌ Error saving score:", response.statusText);
+      }
+    } catch (error) {
+      console.error("❌ Error saving score:", error);
+    }
+  };
+
   return (
     <div style={styles.page}>
-      {/* BACK TO GAME CORNER BUTTON */}
-      <Link to="/gameindex" style={styles.backButton}>
-        BACK TO GAME CORNER
-      </Link>
-
+      <Link to="/gameindex" style={styles.backButton}>BACK TO GAME CORNER</Link>
       <div style={styles.gameContainer}>
         <h1>Snake Game</h1>
         <h2>Score: {score}</h2>
@@ -153,25 +132,13 @@ const SnakeGame = () => {
               const isSnake = snake.some((segment) => segment.x === col && segment.y === row);
               const isFood = food.x === col && food.y === row;
               return (
-                <div
-                  key={`${row}-${col}`}
-                  style={{
-                    ...styles.cell,
-                    ...(isSnake ? styles.snake : {}),
-                    ...(isFood ? styles.food : {}),
-                  }}
-                />
+                <div key={`${row}-${col}`} style={{ ...styles.cell, ...(isSnake ? styles.snake : {}), ...(isFood ? styles.food : {}) }} />
               );
             })
           )}
         </div>
-
-        {gameOver && (
-          <div>
-            <h2 style={styles.loseText}>❌ Game Over! ❌</h2>
-            <button style={styles.button} onClick={restartGame}>Restart Game</button>
-          </div>
-        )}
+        {gameOver && <h2 style={styles.loseText}>❌ Game Over! ❌</h2>}
+        {gameOver && <button style={styles.button} onClick={restartGame}>Restart Game</button>}
       </div>
     </div>
   );

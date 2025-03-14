@@ -72,8 +72,8 @@ const LeadershipIndex = () => {
         "QUIZ": "/quizleader",
         "GUESS THE NUMBER": "/guessthenumberleader",
         "TIC TAC TOE": "/tictactoeleader",
-        "SNAKE GAME": "/snakegame",
-        "HANG MAN": "/hangman",
+        "SNAKE GAME": "/snakegameleader",
+        "HANG MAN": "/hangmanleader",
     };
 
     return (

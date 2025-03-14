@@ -67,13 +67,16 @@ const Hangman = () => {
     useEffect(() => {
         if (wrongGuesses >= maxWrongGuesses) {
             setGameOver(true);
+            saveScore(wrongGuesses); // ✅ Save score as number of wrong guesses
         }
-
+    
         if (word && word.split("").every((letter) => guessedLetters.includes(letter))) {
             setWin(true);
             setGameOver(true);
+            saveScore(wrongGuesses); // ✅ Save score when user wins
         }
     }, [guessedLetters, wrongGuesses, word]);
+        
 
     const restartGame = () => {
         setWrongGuesses(0);
@@ -82,6 +85,37 @@ const Hangman = () => {
         selectNewWord();
     };
 
+    const saveScore = async (chancesUsed) => {
+        try {
+            const token = sessionStorage.getItem("token");
+            if (!token) {
+                console.error("❌ No authentication token found!");
+                return;
+            }
+    
+            console.log("📡 Sending Chances Used as Score:", chancesUsed);
+    
+            const response = await fetch("http://localhost:3030/api/saveHangmanScore", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify({ score: chancesUsed }), // ✅ Ensure score is sent
+            });
+    
+            const data = await response.json();
+            console.log("✅ Server Response:", data);
+    
+            if (!response.ok) {
+                console.error("❌ Error saving score:", response.statusText);
+            }
+        } catch (error) {
+            console.error("❌ Error saving score:", error);
+        }
+    };
+    
+    
     const hangmanStages = [
         ` 
          ------
