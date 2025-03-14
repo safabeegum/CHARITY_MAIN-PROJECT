@@ -23,6 +23,8 @@ const platformEarningModel = require('./models/platformearning');
 const guessTheNumberModel = require("./models/guessthenumber");
 const quizModel = require("./models/quiz");
 const ticTacToeModel = require("./models/tictactoe");
+const snakeGameModel = require("./models/snakegame");
+const hangmanModel = require("./models/hangman");
 
 
 
@@ -1345,6 +1347,198 @@ app.post("/api/getTicTacToeLeader", async (req, res) => {
         res.json({ leaderboard });
     } catch (error) {
         console.error("❌ Error fetching Tic Tac Toe leaderboard:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!SNAKE GAME
+app.post("/api/saveSnakeGameScore", async (req, res) => {
+    try {
+        console.log("🔹 Request received to save Snake Game score"); 
+
+        // ✅ Check if score is received
+        console.log("📌 Request Body:", req.body);  
+
+        const { score } = req.body;
+        if (score === undefined || isNaN(score)) {
+            console.log("🚨 Invalid score received!");
+            return res.status(400).json({ message: "Score is required and must be a number" });
+        }
+        console.log("📌 Score received:", score);
+
+        // ✅ Validate User Token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            console.log("🚨 Token missing or invalid!");
+            return res.status(401).json({ status: "Error", message: "Token is missing or invalid!" });
+        }
+
+        // ✅ Extract & Verify Token
+        const token = authHeader.split(" ")[1];
+        let decoded;
+        try {
+            decoded = jwt.verify(token, "CharityApp"); // Ensure secret key matches frontend
+            console.log("✅ Token decoded:", decoded);
+        } catch (error) {
+            console.log("🚨 Invalid token!", error);
+            return res.status(401).json({ status: "Error", message: "Invalid or expired token!" });
+        }
+
+        // ✅ Get User ID from Token
+        const userId = decoded.userId;
+        console.log("✅ User ID:", userId);
+        if (!userId) {
+            return res.status(400).json({ status: "Error", message: "User ID is missing in token!" });
+        }
+
+        // ✅ Save to Database
+        const newGame = new snakeGameModel({ userId, score: parseInt(score) });
+        await newGame.save();
+        console.log("✅ Snake Game score saved to MongoDB:", newGame);
+
+        res.status(201).json({ message: "Snake Game score saved successfully", newGame });
+    } catch (error) {
+        console.error("❌ Error saving Snake Game score:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.post("/api/getUserSnakeScores", async (req, res) => {
+    try {
+        const { token } = req.body; // Token sent in body
+        if (!token) {
+            return res.status(401).json({ status: "Error", message: "Token is missing!" });
+        }
+
+        const decoded = jwt.verify(token, "CharityApp");
+        const userId = decoded.userId;
+        if (!userId) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        // Get scores sorted by latest games
+        const scores = await snakeGameModel.find({ userId }).sort({ createdAt: -1 });
+
+        res.json(scores);
+    } catch (error) {
+        console.error("❌ Error fetching Snake Game scores:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.post("/api/getSnakeLeader", async (req, res) => {
+    try {
+        const { date } = req.body; // Optional date filter
+        const startOfDay = date ? new Date(date) : new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Get top 10 players by score for today
+        const leaderboard = await snakeGameModel
+            .find({ createdAt: { $gte: startOfDay, $lte: endOfDay } })
+            .populate("userId", "username") // Get player names
+            .sort({ score: -1, createdAt: 1 }) // Highest score first, older entry wins tie
+            .limit(10);
+
+        res.json({ leaderboard });
+    } catch (error) {
+        console.error("❌ Error fetching Snake Game leaderboard:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!HANGMAN GAME
+app.post("/api/saveHangmanScore", async (req, res) => {
+    try {
+        console.log("🔹 Request received to save Hangman score");
+
+        const { score } = req.body; // ✅ Ensure score is received
+        console.log("📌 Request Body:", req.body);
+
+        if (score === undefined || isNaN(score)) {
+            console.log("🚨 Invalid score received!");
+            return res.status(400).json({ message: "Score is required and must be a number" });
+        }
+
+        // ✅ Validate User Token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            console.log("🚨 Token missing or invalid!");
+            return res.status(401).json({ status: "Error", message: "Token is missing or invalid!" });
+        }
+
+        // ✅ Extract & Verify Token
+        const token = authHeader.split(" ")[1];
+        let decoded;
+        try {
+            decoded = jwt.verify(token, "CharityApp");
+            console.log("✅ Token decoded:", decoded);
+        } catch (error) {
+            console.log("🚨 Invalid token!", error);
+            return res.status(401).json({ status: "Error", message: "Invalid or expired token!" });
+        }
+
+        // ✅ Get User ID from Token
+        const userId = decoded.userId;
+        console.log("✅ User ID:", userId);
+        if (!userId) {
+            return res.status(400).json({ status: "Error", message: "User ID is missing in token!" });
+        }
+
+        // ✅ Save to Database
+        const newGame = new hangmanModel({ userId, score: parseInt(score) });
+        await newGame.save();
+        console.log("✅ Hangman Game score saved to MongoDB:", newGame);
+
+        res.status(201).json({ message: "Hangman Game score saved successfully", newGame });
+    } catch (error) {
+        console.error("❌ Error saving Hangman Game score:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.post("/api/getUserHangmanScores", async (req, res) => {
+    try {
+        const { token } = req.body; // Token sent in body
+        if (!token) {
+            return res.status(401).json({ status: "Error", message: "Token is missing!" });
+        }
+
+        const decoded = jwt.verify(token, "CharityApp");
+        const userId = decoded.userId;
+        if (!userId) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        // Get user's Hangman scores sorted by latest games
+        const scores = await hangmanModel.find({ userId }).sort({ createdAt: -1 });
+
+        res.json(scores);
+    } catch (error) {
+        console.error("❌ Error fetching Hangman scores:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.post("/api/getHangmanLeader", async (req, res) => {
+    try {
+        const { date } = req.body; // Optional date filter
+        const startOfDay = date ? new Date(date) : new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Get top 10 players with the lowest number of attempts
+        const leaderboard = await hangmanModel
+            .find({ createdAt: { $gte: startOfDay, $lte: endOfDay } })
+            .populate("userId", "username")
+            .sort({ attempts: 1, createdAt: 1 }) // Sort by lowest attempts, then by earliest completion time
+            .limit(10);
+
+        res.json({ leaderboard });
+    } catch (error) {
+        console.error("❌ Error fetching Hangman leaderboard:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
