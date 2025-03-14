@@ -71,7 +71,7 @@ const LeadershipIndex = () => {
     const gameRoutes = {
         "QUIZ": "/quizleader",
         "GUESS THE NUMBER": "/guessthenumberleader",
-        "TIC TAC TOE": "/tictactoe",
+        "TIC TAC TOE": "/tictactoeleader",
         "SNAKE GAME": "/snakegame",
         "HANG MAN": "/hangman",
     };

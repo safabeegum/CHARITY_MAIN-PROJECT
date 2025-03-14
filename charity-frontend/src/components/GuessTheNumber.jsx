@@ -11,14 +11,6 @@ const GuessTheNumber = () => {
 
     console.log(`Generated Number: ${generatedNumber}`);
 
-    const playAgain = () => {
-        setTypedNumber("");
-        setAttempts(0);
-        setAlertMessage("");
-        setShowPopup(false);
-        setGeneratedNumber(Math.floor(Math.random() * 100) + 1);
-    };
-
     // Function to send attempts count to backend when the player wins
     const saveScore = async (finalAttempts) => {
         try {
@@ -167,7 +159,7 @@ const GuessTheNumber = () => {
                 <br></br>
                 <p>{alertMessage}</p>
                 <p>Attempts: {attempts}</p>
-                <button style={styles.numberBtn} onClick={playAgain}>
+                <button style={styles.numberBtn}>
                     Play Again
                 </button>
             </div>

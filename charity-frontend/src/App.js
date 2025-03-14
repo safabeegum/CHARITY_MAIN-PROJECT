@@ -33,6 +33,7 @@ import PendingPosts from './components/PendingPosts';
 import LeadershipIndex from './components/LeadershipIndex';
 import GuessTheNumberLeader from './components/GuessTheNumberLeader';
 import QuizLeader from './components/QuizLeader';
+import TicTacToeLeader from './components/TicTacToeLeader';
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
         <Route path='/leadership' element={<LeadershipIndex/>}/>
         <Route path='/guessthenumberleader' element={<GuessTheNumberLeader/>}/>
         <Route path='/quizleader' element={<QuizLeader/>}/>
+        <Route path='/tictactoeleader' element={<TicTacToeLeader/>}/>
         
       </Routes>
       </BrowserRouter>
