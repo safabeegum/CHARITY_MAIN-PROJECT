@@ -22,7 +22,8 @@ const gameDonationModel = require("./models/gamedonation");
 const platformEarningModel = require('./models/platformearning');
 const guessTheNumberModel = require("./models/guessthenumber");
 const quizModel = require("./models/quiz");
-  
+const ticTacToeModel = require("./models/tictactoe");
+
 
 
 let app = Express(); // 
@@ -1172,8 +1173,6 @@ app.get("/api/getQuizLeader", async (req, res) => {
     }
 });
 
-
-
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!GUESS THE NUMBER
 app.post("/api/saveGuessTheNumberScore", async (req, res) => {
     try {
@@ -1256,6 +1255,99 @@ app.get("/api/getGuessTheNumberLeader", async (req, res) => {
     }
 });
 
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!TIC TAC TOE
+app.post("/api/saveTicTacToeScore", async (req, res) => {
+    try {
+        console.log("🔹 Request received to save score"); // Debugging log
+
+        const { score } = req.body;
+        console.log("📌 Score received:", score); // Check if score is coming
+
+        // ✅ Validate User Token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            console.log("🚨 Token missing or invalid!");
+            return res.status(401).json({ status: "Error", message: "Token is missing or invalid!" });
+        }
+
+        // ✅ Extract & Verify Token
+        const token = authHeader.split(" ")[1];
+        let decoded;
+        try {
+            decoded = jwt.verify(token, "CharityApp"); // Make sure this secret matches your frontend
+        } catch (error) {
+            console.log("🚨 Invalid token!", error);
+            return res.status(401).json({ status: "Error", message: "Invalid or expired token!" });
+        }
+
+        // ✅ Get User ID from Token
+        const userId = decoded.userId;
+        console.log("✅ User ID:", userId);
+        if (!userId) {
+            return res.status(400).json({ status: "Error", message: "User ID is missing in token!" });
+        }
+
+        // ✅ Validate Score
+        if (score === undefined || isNaN(score)) {
+            console.log("🚨 Invalid score received!");
+            return res.status(400).json({ message: "Score is required and must be a number" });
+        }
+
+        // ✅ Save to Database
+        const newGame = new ticTacToeModel({ userId, score: parseInt(score) });
+        await newGame.save();
+        console.log("✅ Score saved to MongoDB:", newGame);
+
+        res.status(201).json({ message: "Tic Tac Toe score saved successfully", newGame });
+    } catch (error) {
+        console.error("❌ Error saving Tic Tac Toe score:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.post("/api/getUserTicTacToeScores", async (req, res) => {
+    try {
+        const { token } = req.body; // Token sent in body
+        if (!token) {
+            return res.status(401).json({ status: "Error", message: "Token is missing!" });
+        }
+
+        const decoded = jwt.verify(token, "CharityApp");
+        const userId = decoded.userId;
+        if (!userId) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        const scores = await ticTacToeModel.find({ userId }).sort({ createdAt: -1 });
+        res.json(scores);
+    } catch (error) {
+        console.error("❌ Error fetching Tic Tac Toe scores:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+// ✅ Get Top Tic Tac Toe Players (Leaderboard) - POST
+app.post("/api/getTicTacToeLeader", async (req, res) => {
+    try {
+        const { date } = req.body; // Optional: Date filter
+        const startOfDay = date ? new Date(date) : new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Get top 10 players by score for today
+        const leaderboard = await ticTacToeModel
+            .find({ createdAt: { $gte: startOfDay, $lte: endOfDay } })
+            .populate("userId", "username") // Get player names
+            .sort({ score: -1, createdAt: 1 }) // Highest score first, older entry wins tie
+            .limit(10);
+
+        res.json({ leaderboard });
+    } catch (error) {
+        console.error("❌ Error fetching Tic Tac Toe leaderboard:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
 
 //-----------------------------------------------------GAMES AND LEADERSHIP---------------------------------------------------------------------
 
