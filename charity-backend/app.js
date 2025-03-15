@@ -193,12 +193,13 @@ app.post("/api/admindashboard", async (req, res) => {
   
       // Feedback count remains the same (assuming feedback has no status check)
       const donationCount = await paymentModel.countDocuments(); // Assuming feedback is stored in reviewModel
-  
+    const gamedonationCount = await gameDonationModel.countDocuments();
+
       res.json({
         users: usersCount,
         socialWorkers: socialWorkersCount,
         pendingApprovals: pendingReportsCount, // Return the count of pending approvals
-        donation: donationCount
+        donation: donationCount+gamedonationCount
       });
   
     } catch (error) {
@@ -438,7 +439,25 @@ app.post("/approvepost", async (req, res) => {
     }
 });
 
+//Approved Posts
+app.get("/approvedposts", async (req, res) => {
+    try {
+        const posts = await postModel.find({ status: "approved" });
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch approved posts" });
+    }
+});
 
+//Rejected Posts
+app.get("/rejectedposts", async (req, res) => {
+    try {
+        const posts = await postModel.find({ status: "Rejected" });
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: "Failed to fetch rejected posts" });
+    }
+});
 
 //-----------------------------------------------------ADMIN DASHBOARD------------------------------------------------------------------------
 
