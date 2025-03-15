@@ -36,6 +36,8 @@ import QuizLeader from './components/QuizLeader';
 import TicTacToeLeader from './components/TicTacToeLeader';
 import SnakeGameLeader from './components/SnakeGameLeader';
 import HangmanLeader from './components/HangmanLeader';
+import ApprovedPost from './components/ApprovedPost';
+import RejectedPost from './components/RejectedPost';
 
 function App() {
   return (
@@ -76,8 +78,11 @@ function App() {
         <Route path='/leadership' element={<LeadershipIndex/>}/>
         <Route path='/guessthenumberleader' element={<GuessTheNumberLeader/>}/>
         <Route path='/quizleader' element={<QuizLeader/>}/>
+        <Route path='/tictactoeleader' element={<TicTacToeLeader/>}/>
         <Route path='/snakegameleader' element={<SnakeGameLeader/>}/> 
         <Route path='/hangmanleader' element={<HangmanLeader/>}/> 
+        <Route path='/approvedposts' element={<ApprovedPost/>}/>
+        <Route path='/rejectedposts' element={<RejectedPost/>}/>
         
       </Routes>
       </BrowserRouter>
