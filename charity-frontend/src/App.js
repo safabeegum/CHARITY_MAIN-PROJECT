@@ -38,6 +38,9 @@ import SnakeGameLeader from './components/SnakeGameLeader';
 import HangmanLeader from './components/HangmanLeader';
 import ApprovedPost from './components/ApprovedPost';
 import RejectedPost from './components/RejectedPost';
+import GamePayments from './components/GamePayments';
+import Donations from './components/Donations';
+import CompletedPosts from './components/CompletedPosts';
 
 function App() {
   return (
@@ -82,7 +85,10 @@ function App() {
         <Route path='/snakegameleader' element={<SnakeGameLeader/>}/> 
         <Route path='/hangmanleader' element={<HangmanLeader/>}/> 
         <Route path='/approvedposts' element={<ApprovedPost/>}/>
-        <Route path='/rejectedposts' element={<RejectedPost/>}/>
+        <Route path='/rejectedposts' element={<RejectedPost/>}/> 
+        <Route path='/gamepayments' element={<GamePayments/>}/> 
+        <Route path='/donations' element={<Donations/>}/> 
+        <Route path='/completedposts' element={<CompletedPosts/>}/> 
         
       </Routes>
       </BrowserRouter>
