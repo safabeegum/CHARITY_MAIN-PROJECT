@@ -25,6 +25,7 @@ const quizModel = require("./models/quiz");
 const ticTacToeModel = require("./models/tictactoe");
 const snakeGameModel = require("./models/snakegame");
 const hangmanModel = require("./models/hangman");
+const transactionModel = require("./models/transaction"); 
 
 
 
@@ -216,26 +217,50 @@ app.post("/api/useractivity", async (req, res) => {
 
         const activity = await userModel.aggregate([
             {
-                $match: { createdAt: { $gte: last7Days } } // Ensure createdAt is present
+                $match: { createdAt: { $gte: last7Days } }
             },
             {
                 $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, // Format date
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                     count: { $sum: 1 }
                 }
             },
-            {
-                $sort: { _id: 1 }
-            }
+            { $sort: { _id: 1 } }
         ]);
 
-        console.log("User Activity Data:", activity); // Debugging: Check if data is retrieved
-
         res.json(activity.length > 0 ? activity.map(item => ({ date: item._id, count: item.count })) : []);
-
     } catch (error) {
         console.error("Error fetching user activity:", error);
         res.status(500).json({ status: "Error", message: "Failed to fetch user activity" });
+    }
+});
+
+//Transaction Activity
+app.post("/api/transactionactivity", async (req, res) => {
+    try {
+        const last7Days = new Date();
+        last7Days.setDate(last7Days.getDate() - 7);
+
+        const transactions = await transactionModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: last7Days },
+                    status: "success"
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    totalAmount: { $sum: "$requiredAmount" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        res.json(transactions.length > 0 ? transactions.map(t => ({ date: t._id, totalAmount: t.totalAmount })) : []);
+    } catch (error) {
+        console.error("Error fetching transactions:", error);
+        res.status(500).json({ status: "Error", message: "Failed to fetch transaction data" });
     }
 });
 
@@ -459,6 +484,85 @@ app.get("/rejectedposts", async (req, res) => {
     }
 });
 
+//Game Payments
+app.get("/gamepayments", async (req, res) => {
+    try {
+        const gamedonation = await gameDonationModel.find().sort({ createdAt: -1 });
+        return res.json(gamedonation);
+    } catch (error) {
+        console.error("Fetch Payments Error:", error);
+        return res.status(500).json({ status: "Failed", message: "Could not fetch payments" });
+    }
+});
+
+//Donations
+app.get("/donations", async (req, res) => {
+    try {
+        const donations = await paymentModel.find().populate("userId", "name email").populate("postId");
+        return res.json(donations);
+    } catch (error) {
+        console.error("Fetch Donations Error:", error);
+        return res.status(500).json({ status: "Failed", message: "Could not fetch donations" });
+    }
+});
+
+//Completed Posts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+app.get("/completedposts", async (req, res) => {
+    try {
+        let allApprovedPosts = await postModel.find({
+            status: "approved"
+        });
+
+        console.log("✅ ALL Approved Posts After Fix:", JSON.stringify(allApprovedPosts, null, 2)); // Debugging
+
+        let completedPosts = allApprovedPosts.filter(post => {
+            let received = Number(post.currentDonationsReceived) || 0;
+            let required = Number(post.requiredAmount) || 0;
+            return received >= required;
+        });
+
+        console.log("✅ Completed Posts After Filtering:", completedPosts);
+
+        res.json(completedPosts);
+    } catch (error) {
+        console.error("❌ Fetch Completed Posts Error:", error);
+        res.status(500).json({ status: "Failed", message: "Could not fetch completed posts" });
+    }
+});
+
+//Transaction
+app.post("/transaction", async (req, res) => {
+    try {
+        const { postId } = req.body;
+
+        // Step 1: Fetch post details from MongoDB
+        const post = await postModel.findById(postId);
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // Step 2: Extract details from the post
+        const transactionData = {
+            postId: post._id,
+            requiredAmount: post.requiredAmount,
+            accountName: post.accountName,
+            accountNo: post.accountNo,
+            ifsc: post.ifsc,
+            bankName: post.bankName,
+            status: "success", // Mark transaction as completed
+        };
+
+        // Step 3: Save transaction in MongoDB
+        const newTransaction = new transactionModel(transactionData);
+        await newTransaction.save();
+
+        res.status(201).json({ message: "Transaction successful", transaction: newTransaction });
+    } catch (error) {
+        console.error("❌ Transaction Error:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 //-----------------------------------------------------ADMIN DASHBOARD------------------------------------------------------------------------
 
 //-----------------------------------------------------USER DASHBOARD-------------------------------------------------------------------------
