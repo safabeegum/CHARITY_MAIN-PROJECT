@@ -41,6 +41,8 @@ import RejectedPost from './components/RejectedPost';
 import GamePayments from './components/GamePayments';
 import Donations from './components/Donations';
 import CompletedPosts from './components/CompletedPosts';
+import  Wallet  from './components/Wallet';
+
 
 function App() {
   return (
@@ -89,6 +91,7 @@ function App() {
         <Route path='/gamepayments' element={<GamePayments/>}/> 
         <Route path='/donations' element={<Donations/>}/> 
         <Route path='/completedposts' element={<CompletedPosts/>}/> 
+        <Route path='/wallet' element={<Wallet/>}/> 
         
       </Routes>
       </BrowserRouter>

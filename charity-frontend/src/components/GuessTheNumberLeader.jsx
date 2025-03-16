@@ -14,8 +14,8 @@ const GuessTheNumberLeader = () => {
             const response = await fetch("http://localhost:3030/api/getGuessTheNumberLeader");
             const data = await response.json();
 
-            // Sort leaders by attempts (lower is better)
-            const sortedLeaders = data.guessTheNumberLeader.sort((a, b) => a.attempts - b.attempts);
+            // Sort leaders by scores (lower is better)
+            const sortedLeaders = data.guessTheNumberLeader.sort((a, b) => a.score - b.score);
             setLeaders(sortedLeaders);
         } catch (error) {
             console.error("Error fetching GuessTheNumberLeader:", error);
@@ -44,7 +44,7 @@ const GuessTheNumberLeader = () => {
                     />
                     <YAxis label={{ value: "Attempts", angle: -90, position: "insideLeft" }} />
                     <Tooltip />
-                    <Bar dataKey="attempts" fill="#82ca9d" barSize={50}>
+                    <Bar dataKey="score" fill="#82ca9d" barSize={50}>
                         {leaders.map((entry, index) => (
                             <Cell key={entry.userId.username} fill={index === 0 ? "#FFD700" : "#82ca9d"} />
                         ))}

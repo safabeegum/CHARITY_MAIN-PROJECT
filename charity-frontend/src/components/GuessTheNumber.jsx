@@ -4,15 +4,15 @@ import Confetti from "react-confetti";
 
 const GuessTheNumber = () => {
     const [typedNumber, setTypedNumber] = useState("");
-    const [attempts, setAttempts] = useState(0);
+    const [scores, setScores] = useState(0);
     const [generatedNumber, setGeneratedNumber] = useState(Math.floor(Math.random() * 100) + 1);
     const [alertMessage, setAlertMessage] = useState("");
     const [showPopup, setShowPopup] = useState(false);
 
     console.log(`Generated Number: ${generatedNumber}`);
 
-    // Function to send attempts count to backend when the player wins
-    const saveScore = async (finalAttempts) => {
+    // Function to send scores count to backend when the player wins
+    const saveScore = async (finalScores) => {
         try {
             const token = sessionStorage.getItem("token"); // Get token from sessionStorage
     
@@ -28,16 +28,21 @@ const GuessTheNumber = () => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`, // Send authentication token
                 },
-                body: JSON.stringify({ attempts: finalAttempts }),
+                body: JSON.stringify({ scores: finalScores }),  // Sending 'scores'
             });
     
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(`❌ Error: ${errorData.message}`);
+                return;
+            }
+
             const data = await response.json();
             console.log("✅ Score saved:", data);
         } catch (error) {
             console.error("❌ Error saving score:", error);
         }
     };
-    
 
     const compare = () => {
         const number = Number(typedNumber); // Convert input to a number
@@ -47,13 +52,13 @@ const GuessTheNumber = () => {
             return;
         }
 
-        const newAttempts = attempts + 1;
-        setAttempts(newAttempts);
+        const newScores = scores + 1;
+        setScores(newScores);
 
         if (number === generatedNumber) {
             setAlertMessage(`🎉 You won! The number was ${generatedNumber}`);
             setShowPopup(true);
-            saveScore(newAttempts); // Save the correct number of attempts
+            saveScore(newScores); // Save the correct number of scores
         } else if (Math.abs(number - generatedNumber) <= 5) {
             setAlertMessage(`🔥 You are very close!`);
         } else if (number > generatedNumber) {
@@ -61,6 +66,15 @@ const GuessTheNumber = () => {
         } else {
             setAlertMessage(`📉 Number is too Low!`);
         }
+    };
+
+    // Function to reset the game state
+    const playAgain = () => {
+        setGeneratedNumber(Math.floor(Math.random() * 100) + 1);  // Generate a new number
+        setScores(0);  // Reset the score
+        setTypedNumber("");  // Clear input field
+        setAlertMessage("");  // Clear any alerts
+        setShowPopup(false);  // Hide the confetti
     };
 
     // Styles
@@ -158,8 +172,8 @@ const GuessTheNumber = () => {
                 )}
                 <br></br>
                 <p>{alertMessage}</p>
-                <p>Attempts: {attempts}</p>
-                <button style={styles.numberBtn}>
+                <p>Attempts: {scores}</p>
+                <button style={styles.numberBtn} onClick={playAgain}>
                     Play Again
                 </button>
             </div>
