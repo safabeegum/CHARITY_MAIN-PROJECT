@@ -44,6 +44,10 @@ import CompletedPosts from './components/CompletedPosts';
 import  Wallet  from './components/Wallet';
 import RewardsList from './components/RewardsList';
 import AdminReport from './components/AdminReport';
+import ManagePosts from './components/ManagePosts';
+import ViewReports from './components/ViewReports';
+import Announcements from './components/Announcements';
+import UserAnnouncements from './components/UserAnnouncements';
 
 
 function App() {
@@ -96,6 +100,10 @@ function App() {
         <Route path='/wallet' element={<Wallet/>}/> 
         <Route path='/rewardslist' element={<RewardsList/>}/> 
         <Route path='/adminreport' element={<AdminReport/>}/> 
+        <Route path='/manageposts' element={<ManagePosts/>}/> 
+        <Route path='/viewreports' element={<ViewReports/>}/> 
+        <Route path='/announcements' element={<Announcements/>}/> 
+        <Route path='/userannouncements' element={<UserAnnouncements/>}/> 
         
       </Routes>
       </BrowserRouter>

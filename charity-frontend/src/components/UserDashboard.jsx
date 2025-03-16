@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faUsers, faFileAlt, faComments, faUser, faWallet } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faUsers, faFileAlt, faComments, faUser, faWallet,faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import UserNavbar from './UserNavbar';
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +39,7 @@ const UserDashboard = () => {
               { href: "/paymenthistory", icon: faFileAlt, label: "PAYMENT HISTORY" },
               { href: "/leadership", icon: faUsers, label: "LEADERSHIP SCORES" },
               { href: "/wallet", icon: faWallet, label: "MY WALLET" },
+              { href: "/userannouncements", icon: faBullhorn , label: "COMMUNITY ANNOUNCEMENT" },
               { href: "/review", icon: faComments, label: "POST A REVIEW" },
               { href: "/myprofile", icon: faUser, label: "MY PROFILE" }
             ].map((item, index) => (
