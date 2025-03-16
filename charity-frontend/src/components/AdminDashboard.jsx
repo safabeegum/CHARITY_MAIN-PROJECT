@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faUsers, faHandsHelping, faHourglassHalf, faCheckCircle, 
-         faTimesCircle, faHandHoldingHeart, faGamepad, faMoneyCheckAlt, faComments } from '@fortawesome/free-solid-svg-icons';
+         faTimesCircle, faHandHoldingHeart, faGamepad, faMoneyCheckAlt, faComments, faGift, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
 
@@ -104,16 +104,18 @@ const AdminDashboard = () => {
         <div className="col-sm-3 bg-white text-dark p-3 min-vh-100 border-end">
           <ul className="nav flex-column">
             {[
-              { href: "/admindashboard", icon: faHome, label: "Home" },
-              { href: "/manageusers", icon: faUsers, label: "Manage Users" },
-              { href: "/managesocialworkers", icon: faHandsHelping, label: "Manage Social Workers" },
-              { href: "/pendingposts", icon: faHourglassHalf, label: "Pending Posts" },
-              { href: "/approvedposts", icon: faCheckCircle, label: "Approved Posts" },
-              { href: "/rejectedposts", icon: faTimesCircle, label: "Rejected Posts" },
-              { href: "/donations", icon: faHandHoldingHeart, label: "Manage Donations" },
-              { href: "/gamepayments", icon: faGamepad, label: "Manage Game Funds" },
-              { href: "/completedposts", icon: faMoneyCheckAlt, label: "Manage Transactions" },
-              { href: "/managereview", icon: faComments, label: "Manage Reviews" }
+              { href: "/admindashboard", icon: faHome, label: "HOME" },
+              { href: "/manageusers", icon: faUsers, label: "MANAGE USERS" },
+              { href: "/managesocialworkers", icon: faHandsHelping, label: "MANAGE SOCIAL WORKERS" },
+              { href: "/pendingposts", icon: faHourglassHalf, label: "PENDING POSTS" },
+              { href: "/approvedposts", icon: faCheckCircle, label: "APPROVED POSTS" },
+              { href: "/rejectedposts", icon: faTimesCircle, label: "REJECTED POSTS" },
+              { href: "/donations", icon: faHandHoldingHeart, label: "MANAGE DONATIONS" },
+              { href: "/gamepayments", icon: faGamepad, label: "MANAGE GAME FUNDS" },
+              { href: "/completedposts", icon: faMoneyCheckAlt, label: "MANAGE TRANSACTIONS" },
+              { href: "/rewardslist", icon: faGift, label: "MANAGE REWARDS" },
+              { href: "/adminreport", icon: faChartLine, label: "REPORTS AND ANALYTICS" },
+              { href: "/managereview", icon: faComments, label: "MANAGE REVIEWS" }
             ].map((item, index) => (
               <li key={index} className="nav-item">
                 <a className="nav-link text-dark fw-bold d-flex align-items-center border-bottom py-3 px-2" href={item.href}

@@ -42,6 +42,8 @@ import GamePayments from './components/GamePayments';
 import Donations from './components/Donations';
 import CompletedPosts from './components/CompletedPosts';
 import  Wallet  from './components/Wallet';
+import RewardsList from './components/RewardsList';
+import AdminReport from './components/AdminReport';
 
 
 function App() {
@@ -92,6 +94,8 @@ function App() {
         <Route path='/donations' element={<Donations/>}/> 
         <Route path='/completedposts' element={<CompletedPosts/>}/> 
         <Route path='/wallet' element={<Wallet/>}/> 
+        <Route path='/rewardslist' element={<RewardsList/>}/> 
+        <Route path='/adminreport' element={<AdminReport/>}/> 
         
       </Routes>
       </BrowserRouter>
