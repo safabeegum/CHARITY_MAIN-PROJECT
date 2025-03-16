@@ -6,7 +6,7 @@ const guessTheNumberSchema = new Mongoose.Schema({
         ref: "users",  // Reference to the User model
         required: true,
     },
-    attempts: {
+    score: {
         type: Number,  // Store the number of attempts
         required: true,
     },

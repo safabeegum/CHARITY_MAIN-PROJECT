@@ -11,6 +11,7 @@ const path = require('path');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const EventEmitter = require('events');
 const paymentEvents = new EventEmitter();
+const cron = require('node-cron');
 
 const userModel = require("./models/users");
 const adminModel = require("./models/admin");
@@ -25,8 +26,10 @@ const quizModel = require("./models/quiz");
 const ticTacToeModel = require("./models/tictactoe");
 const snakeGameModel = require("./models/snakegame");
 const hangmanModel = require("./models/hangman");
-const transactionModel = require("./models/transaction"); 
-
+const transactionModel = require("./models/transaction");
+const walletModel = require('./models/wallet');  
+const rewardModel = require("./models/reward");
+const GameModels = [quizModel, guessTheNumberModel, ticTacToeModel, snakeGameModel, hangmanModel];
 
 
 let app = Express(); // 
@@ -714,6 +717,7 @@ app.post("/gamepayment", async (req, res) => {
         return res.status(500).json({ status: "Failed", message: "Payment Failed" });
     }
 });
+
 paymentEvents.on('allocateDonation', async (payment) => {
     console.log("🚀 Event Triggered: allocateDonation with payment ID:", payment._id);
 
@@ -740,6 +744,13 @@ paymentEvents.on('allocateDonation', async (payment) => {
             await payment.save();
 
             console.log(`✅ ₹${donationAmount} donated to charity post: ${charityPost._id}`);
+            // ✅ Move 10% to platform earnings
+            const platformEarning = payment.amount * 0.1; // 10% of the payment
+            await platformEarningModel.create({
+                amount: platformEarning
+            });
+            console.log(`💰 ₹${platformEarning} added to platform earnings.`);
+
         } else {
             console.log("⚠️ No eligible charity post found, keeping donation pending.");
 
@@ -810,10 +821,151 @@ async function allocatePendingDonations() {
     }
 
     console.log("🎉 All pending donations have been allocated!");
-} 
+}
+
+//Game Rewards
+cron.schedule('45 8 * * *', async () => {
+    console.log("🔔 Scheduled task triggered: Rewarding top scorers...");
+    await addRewardsForTopScorers();
+});
+
+const addRewardsForTopScorers = async () => {           
+    const rewardAmount = 0.40; // ₹0.40 = 20% of ₹2
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of the day
+
+    for (const GameModel of GameModels) {
+        try {
+            console.log(`[${new Date().toISOString()}] Checking top scorer for ${GameModel.modelName}...`);
+
+            // ✅ Find today's top scorer for the game
+            const topScorer = await GameModel.findOne({ createdAt: { $gte: today } }) // Filter only today's scores
+                .sort({ score: -1 })  // Sort by highest score
+                .limit(1);
+
+            if (!topScorer) {
+                console.log(`⚠️ No top scorer found for ${GameModel.modelName} today. Skipping...`);
+                continue; // Skip this game if no top scorer for today
+            }
+
+            console.log(`🏆 Top scorer found for ${GameModel.modelName}:`, topScorer);
+
+            // ✅ Start a session for transaction atomicity
+            const session = await Mongoose.startSession();
+            session.startTransaction();
+
+            try {
+                // ✅ Find or create a wallet for the user
+                let userWallet = await walletModel.findOne({ userId: topScorer.userId }).session(session);
+
+                if (!userWallet) {
+                    console.log(`🆕 No wallet found for user ${topScorer.userId}. Creating one...`);
+                    userWallet = new walletModel({ userId: topScorer.userId, balance: 0, transactions: [] });
+                }
+
+                // ✅ Add the reward to the wallet
+                userWallet.balance += rewardAmount;
+
+                // ✅ Log the transaction
+                userWallet.transactions.push({
+                    type: 'reward',
+                    amount: rewardAmount,
+                    date: new Date()
+                });
+
+                console.log(`💰 Adding ₹${rewardAmount} to wallet of user ${topScorer.userId}`);
+
+                await userWallet.save({ session });
+
+                // ✅ Commit the transaction
+                await session.commitTransaction();
+
+                console.log(`✅ Reward added successfully for user ${topScorer.userId}!`);
+            } catch (error) {
+                console.error("❌ Error during wallet transaction:", error);
+                await session.abortTransaction();  // Rollback changes if any error occurs
+            } finally {
+                session.endSession();
+            }
+        } catch (error) {
+            console.error(`❌ Error rewarding top scorer for ${GameModel.modelName}:`, error);
+        }
+    }
+};
+
+
+//Wallet Details
+app.get('/allwallets', async (req, res) => {
+    console.log("🚀 /allwallets API was called!");
+
+    let token = req.headers.token;  // Keeping token extraction unchanged
+    if (!token) {
+        console.log("❌ No token provided!");
+        return res.status(401).json({ status: "Token is missing" });
+    }
+
+    jwt.verify(token, "CharityApp", async (error, decoded) => {
+        if (error) {
+            console.log("❌ JWT verification failed:", error.message);
+            return res.status(403).json({ status: "Invalid Token", error: error.message });
+        }
+
+        console.log("✅ Token Verified! User:", decoded.email);
+
+        try {
+            console.log("🔍 Fetching all wallets...");
+            const wallets = await walletModel.find().populate('userId', 'name username email phone');
+
+            if (!wallets.length) {
+                console.log("❌ No wallets found!");
+                return res.status(404).json({ status: "No wallets found" });
+            }
+
+            console.log("✅ Wallets Retrieved:", JSON.stringify(wallets, null, 2));
+            res.json(wallets);
+        } catch (error) {
+            console.error("❌ Error fetching wallets:", error);
+            res.status(500).json({ status: "Internal Server Error" });
+        }
+    });
+});
+
+//Claim Reward
+app.post("/claimreward", async (req, res) => {
+    const { userId, upiId } = req.body;
+    const rewardAmount = 30; // Fixed reward
+  
+    if (!userId || !upiId) {
+      return res.status(400).json({ message: "User ID and UPI ID are required" });
+    }
+  
+    try {
+      const wallet = await walletModel.findOne({ userId });
+  
+      if (!wallet) {
+        return res.status(404).json({ message: "Wallet not found" });
+      }
+  
+      if (wallet.balance < rewardAmount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+  
+      // Deduct the reward amount
+      wallet.balance -= rewardAmount;
+      await wallet.save();
+  
+      // Save the reward in the database
+      await rewardModel.create({ userId, upiId, amount: rewardAmount });
+  
+      return res.status(200).json({ message: "Reward Granted Successfully!" });
+    } catch (error) {
+      console.error("Error processing reward:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  });
 
 // Configure Brevo API Key
-const brevoApiKey = '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';
+const brevoApiKey = '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';
 SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = brevoApiKey;
 
 // Make Payment 
@@ -1301,7 +1453,7 @@ app.get("/api/getQuizLeader", async (req, res) => {
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!GUESS THE NUMBER
 app.post("/api/saveGuessTheNumberScore", async (req, res) => {
     try {
-        const { attempts } = req.body;
+        const { scores } = req.body;  // Use 'scores' as the key
 
         // ✅ Validate User Token
         const authHeader = req.headers.authorization;
@@ -1320,21 +1472,21 @@ app.post("/api/saveGuessTheNumberScore", async (req, res) => {
 
         const userId = decoded.userId; // Extract userId from token
 
-        if (!attempts) {
-            return res.status(400).json({ message: "Attempts are required" });
+        if (!scores) {
+            return res.status(400).json({ message: "Scores are required" });
         }
 
-        const newGame = new guessTheNumberModel({ userId, attempts });
+        const newGame = new guessTheNumberModel({ userId, score: scores });  // Store as 'score'
         await newGame.save();
 
-        res.status(201).json({ message: "Game attempt saved successfully", newGame });
+        res.status(201).json({ message: "Game score saved successfully", newGame });
     } catch (error) {
-        console.error("❌ Error saving game attempt:", error);
+        console.error("❌ Error saving game score:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
 
-app.get("/api/getUserAttempts", async (req, res) => {
+app.get("/api/getUserScores", async (req, res) => {
     try {
         // ✅ Validate User Token
         const token = req.headers.authorization;
@@ -1349,12 +1501,12 @@ app.get("/api/getUserAttempts", async (req, res) => {
             return res.status(400).json({ message: "Invalid user ID" });
         }
 
-        // ✅ Fetch attempts from MongoDB
-        const attempts = await guessTheNumberModel.find({ userId }).sort({ createdAt: -1 });
+        // ✅ Fetch scores from MongoDB
+        const scores = await guessTheNumberModel.find({ userId }).sort({ createdAt: -1 });
 
-        res.json(attempts);
+        res.json(scores);
     } catch (error) {
-        console.error("❌ Error fetching user attempts:", error);
+        console.error("❌ Error fetching user scores:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
@@ -1366,11 +1518,11 @@ app.get("/api/getGuessTheNumberLeader", async (req, res) => {
         const endOfDay = new Date();
         endOfDay.setHours(23, 59, 59, 999); // End of today
 
-        // Fetch only today's scores, sorted by lowest attempts
+        // Fetch only today's scores, sorted by lowest scores
         const guessTheNumberLeader = await guessTheNumberModel
             .find({ createdAt: { $gte: startOfDay, $lte: endOfDay } }) // Filter today's records
             .populate("userId", "username") // Get player names
-            .sort({ attempts: 1 }) // Lowest attempts first
+            .sort({ score: 1 }) // Lowest scores first
             .limit(10); // Show top 10
 
         res.json({ guessTheNumberLeader });
@@ -1652,11 +1804,11 @@ app.post("/api/getHangmanLeader", async (req, res) => {
         const endOfDay = new Date(startOfDay);
         endOfDay.setHours(23, 59, 59, 999);
 
-        // Get top 10 players with the lowest number of attempts
+        // Get top 10 players with the lowest number of scores
         const leaderboard = await hangmanModel
             .find({ createdAt: { $gte: startOfDay, $lte: endOfDay } })
             .populate("userId", "username")
-            .sort({ attempts: 1, createdAt: 1 }) // Sort by lowest attempts, then by earliest completion time
+            .sort({ scores: 1, createdAt: 1 }) // Sort by lowest scores, then by earliest completion time
             .limit(10);
 
         res.json({ leaderboard });
@@ -1665,7 +1817,6 @@ app.post("/api/getHangmanLeader", async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
-
 //-----------------------------------------------------GAMES AND LEADERSHIP---------------------------------------------------------------------
 
 app.listen(3030, () =>{
