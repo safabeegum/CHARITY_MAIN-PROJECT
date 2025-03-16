@@ -29,6 +29,7 @@ const hangmanModel = require("./models/hangman");
 const transactionModel = require("./models/transaction");
 const walletModel = require('./models/wallet');  
 const rewardModel = require("./models/reward");
+const announcementModel = require("./models/announcement");
 const GameModels = [quizModel, guessTheNumberModel, ticTacToeModel, snakeGameModel, hangmanModel];
 
 
@@ -956,7 +957,6 @@ const addRewardsForTopScorers = async () => {
     }
 };
 
-
 //Wallet Details
 app.get('/allwallets', async (req, res) => {
     console.log("🚀 /allwallets API was called!");
@@ -1415,6 +1415,142 @@ app.post("/rejectedposts", async (req, res) => {
         res.json(posts);
     } catch (error) {
         res.status(500).json({ status: "Error", message: "Failed to fetch rejected posts" });
+    }
+});
+
+//Delete Posts
+app.post('/deletePost', async (req, res) => {
+    const { postId } = req.body; // Extract postId from request body
+
+    try {
+        const deletedPost = await postModel.findByIdAndDelete(postId);
+        if (!deletedPost) {
+            return res.status(404).json({ message: '❌ Post not found' });
+        }
+        res.json({ message: '✅ Post deleted successfully' });
+    } catch (error) {
+        console.error('❌ Error deleting post:', error);
+        res.status(500).json({ message: '❌ Failed to delete post' });
+    }
+});
+
+//Edit Post
+app.post('/editPost', async (req, res) => {
+    const { postId, requiredAmount } = req.body; // Extract postId and requiredAmount
+
+    try {
+        // Find the post by ID and update only requiredAmount
+        const updatedPost = await postModel.findByIdAndUpdate(
+            postId,
+            { requiredAmount },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedPost) {
+            return res.status(404).json({ message: '❌ Post not found' });
+        }
+
+        res.json({ message: '✅ Amount updated successfully', updatedPost });
+    } catch (error) {
+        console.error('❌ Error updating amount:', error);
+        res.status(500).json({ message: '❌ Failed to update amount' });
+    }
+});
+
+//View Reports
+app.post("/viewreports", async (req, res) => {
+    try {
+        // Fetch post donations
+        const postReports = await postModel.find(
+            {},
+            { title: 1, requiredAmount: 1, currentDonationsReceived: 1, createdAt: 1 }
+        );
+
+        res.status(200).json({
+            postReports,
+            gameReports
+        });
+    } catch (error) {
+        console.error("❌ Error fetching reports:", error);
+        res.status(500).json({ message: "Failed to fetch reports" });
+    }
+});
+
+//Add Announcement
+app.post("/addAnnouncement", async (req, res) => {
+    try {
+        const { topic } = req.body;
+
+        if (!topic) {
+            return res.status(400).json({ message: "Topic is required" });
+        }
+
+        const newAnnouncement = new announcementModel({ topic });
+        await newAnnouncement.save();
+
+        res.status(201).json({ message: "Announcement added successfully", announcement: newAnnouncement });
+    } catch (error) {
+        console.error("❌ Error adding announcement:", error);
+        res.status(500).json({ message: "Failed to add announcement" });
+    }
+});
+
+//Like Announcement
+app.post("/likeAnnouncement", async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) {
+        return res.status(400).json({ message: "Announcement ID is required" });
+      }
+  
+      const updatedAnnouncement = await announcementModel.findByIdAndUpdate(
+        id,
+        { $inc: { likes: 1 } },
+        { new: true }
+      );
+  
+      if (!updatedAnnouncement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+  
+      res.status(200).json({ message: "Announcement liked", likes: updatedAnnouncement.likes });
+    } catch (error) {
+      console.error("❌ Error liking announcement:", error);
+      res.status(500).json({ message: "Failed to like announcement" });
+    }
+  });  
+
+//Get Announcement
+app.get("/getAnnouncements", async (req, res) => {
+    try {
+        const announcements = await announcementModel.find().sort({ createdAt: -1 }); // Latest first
+
+        res.status(200).json(announcements);
+    } catch (error) {
+        console.error("❌ Error fetching announcements:", error);
+        res.status(500).json({ message: "Failed to fetch announcements" });
+    }
+});
+
+//Delete Announcement
+app.post("/deleteAnnouncement", async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ message: "Announcement ID is required" });
+        }
+
+        const deletedAnnouncement = await announcementModel.findByIdAndDelete(id);
+
+        if (!deletedAnnouncement) {
+            return res.status(404).json({ message: "Announcement not found" });
+        }
+
+        res.status(200).json({ message: "Announcement deleted successfully" });
+    } catch (error) {
+        console.error("❌ Error deleting announcement:", error);
+        res.status(500).json({ message: "Failed to delete announcement" });
     }
 });
 
