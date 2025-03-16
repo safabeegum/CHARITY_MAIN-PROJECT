@@ -565,7 +565,70 @@ app.post("/transaction", async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 });
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+
+//Reward List
+app.post("/rewardslist", async (req, res) => {
+    try {
+      const rewards = await rewardModel.find().populate("userId", "name email");
+  
+      if (rewards.length === 0) {
+        return res.status(404).json({ message: "No rewards found" });
+      }
+  
+      res.status(200).json(rewards);
+    } catch (error) {
+      console.error("Error fetching rewards:", error);
+      res.status(500).json({ message: "Failed to fetch rewards" });
+    }
+  });
+  
+//Admin Report
+app.post("/adminreport", async (req, res) => {
+    try {
+        // Total Donations
+        const totalDonations = await paymentModel.aggregate([
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+        ]);
+
+        // Total Rewards Given
+        const totalRewards = await rewardModel.aggregate([
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+        ]);
+
+        // Total Transactions (Money moved in platform)
+        const totalTransactions = await transactionModel.aggregate([
+            { $group: { _id: null, total: { $sum: "$requiredAmount" } } },
+        ]);
+
+        // Total Game Funds
+        const totalGameFunds = await gameDonationModel.aggregate([
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+        ]);
+
+        // Wallet Amount (Sum of all user wallets)
+        const walletAmount = await walletModel.aggregate([
+            { $group: { _id: null, total: { $sum: "$balance" } } },
+        ]);
+
+        // Platform Earnings (Sum of all platform fees collected)
+        const platformEarnings = await platformEarningModel.aggregate([
+            { $group: { _id: null, total: { $sum: "$amount" } } },
+        ]);
+
+        res.status(200).json({
+            totalDonations: totalDonations[0]?.total || 0,
+            totalRewards: totalRewards[0]?.total || 0,
+            totalTransactions: totalTransactions[0]?.total || 0,
+            totalGameFunds: totalGameFunds[0]?.total || 0,
+            walletAmount: walletAmount[0]?.total || 0,
+            platformEarnings: platformEarnings[0]?.total || 0,
+        });
+    } catch (error) {
+        console.error("Error fetching admin report:", error);
+        res.status(500).json({ message: "Error fetching report." });
+    }
+});
+
 //-----------------------------------------------------ADMIN DASHBOARD------------------------------------------------------------------------
 
 //-----------------------------------------------------USER DASHBOARD-------------------------------------------------------------------------
