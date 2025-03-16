@@ -63,7 +63,6 @@ const Announcements = () => {
         <SocialWorkersNavbar/>
     <div className="container mt-4">
       <h4 className="text-center fw-bold mb-4 text-secondary">COMMUNITY ANNOUNCEMENTS</h4>
-
       {/* Add Announcement */}
       <div className="mb-3 d-flex">
         <input

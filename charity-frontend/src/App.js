@@ -48,6 +48,8 @@ import ManagePosts from './components/ManagePosts';
 import ViewReports from './components/ViewReports';
 import Announcements from './components/Announcements';
 import UserAnnouncements from './components/UserAnnouncements';
+import Emergency from './components/Emergency';
+import ViewEmergency from './components/ViewEmergency';
 
 
 function App() {
@@ -104,6 +106,8 @@ function App() {
         <Route path='/viewreports' element={<ViewReports/>}/> 
         <Route path='/announcements' element={<Announcements/>}/> 
         <Route path='/userannouncements' element={<UserAnnouncements/>}/> 
+        <Route path='/emergency' element={<Emergency/>}/> 
+        <Route path='/viewemergency' element={<ViewEmergency/>}/> 
         
       </Routes>
       </BrowserRouter>

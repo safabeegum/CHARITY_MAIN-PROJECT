@@ -8,7 +8,8 @@ import {
   faPlusCircle,
   faTasks,
   faFileAlt,
-  faBullhorn ,
+  faBullhorn,
+  faExclamationTriangle
 } from "@fortawesome/free-solid-svg-icons";
 
 const SocialWorkersDashboard = () => {
@@ -49,6 +50,7 @@ const SocialWorkersDashboard = () => {
               { href: "/manageposts", icon: faTasks, label: "MANAGE POSTS" },
               { href: "/viewreports", icon: faFileAlt, label: "VIEW REPORTS" },
               { href: "/announcements", icon: faBullhorn , label: "COMMUNITY ANNOUNCEMENT" },
+              { href: "/emergency", icon: faExclamationTriangle , label: "EMERGENCY ALERT" },
             ].map((item, index) => (
               <li key={index} className="nav-item">
                 <a
