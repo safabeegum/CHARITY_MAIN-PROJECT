@@ -30,6 +30,7 @@ const transactionModel = require("./models/transaction");
 const walletModel = require('./models/wallet');  
 const rewardModel = require("./models/reward");
 const announcementModel = require("./models/announcement");
+const emergencyModel = require("./models/emergency");
 const GameModels = [quizModel, guessTheNumberModel, ticTacToeModel, snakeGameModel, hangmanModel];
 
 
@@ -1028,7 +1029,7 @@ app.post("/claimreward", async (req, res) => {
   });
 
 // Configure Brevo API Key
-const brevoApiKey = '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';
+const brevoApiKey = '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';
 SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = brevoApiKey;
 
 // Make Payment 
@@ -1343,6 +1344,18 @@ app.post("/addpost", (req, res) => {
             return res.status(400).json({ status: "Error", message: "All fields are required" });
         }
 
+        // ✅ 🚨 AI-Powered Fake Post Detection 🚨
+        const flaggedWords = ["fake", "scam", "test", "fraud", "spam", "hoax"];
+        const fullText = `${title} ${description} ${purpose}`.toLowerCase();  // Combine important fields
+        const flaggedCount = flaggedWords.filter(word => fullText.includes(word)).length;
+
+        if (flaggedCount >= 3) {
+            return res.status(400).json({ 
+                status: "Error", 
+                message: "Your post was flagged as potential spam and was not added!" 
+            });
+        }
+
         // ✅ Handle File Path
         const filePath = req.file ? req.file.path : null;
         const documentType = req.file && req.file.mimetype.startsWith('image/') ? 'image' : 'document';
@@ -1371,6 +1384,7 @@ app.post("/addpost", (req, res) => {
         res.status(200).json({ status: "Success", message: "Post added successfully. Waiting for admin approval." });
     });
 });
+
 
 //Get Social Worker Posts
 app.post('/getSocialWorkerPosts', async (req, res) => {
@@ -1553,6 +1567,161 @@ app.post("/deleteAnnouncement", async (req, res) => {
         res.status(500).json({ message: "Failed to delete announcement" });
     }
 });
+
+//Add Emergency
+const flaggedWords = ["fake", "scam", "test", "hoax", "spam", "fraud"]; // Add more flagged words as needed
+const FLAGGED_THRESHOLD = 3; // Number of flagged words allowed before auto-removal
+
+app.post("/addemergency", async (req, res) => {
+    try {
+        const { title, description, location, alertType, ward_no } = req.body;
+
+        if (!title || !description || !location || !alertType || !ward_no) {
+            return res.status(400).json({ message: "All fields are required!" });
+        }
+
+        // Combine all text fields for analysis
+        const alertText = `${title} ${description} ${location}`.toLowerCase();
+        
+        // Count flagged words in the alert
+        let flaggedCount = flaggedWords.filter(word => alertText.includes(word)).length;
+
+        // If flagged words exceed the threshold, reject the alert
+        if (flaggedCount >= FLAGGED_THRESHOLD) {
+            return res.status(403).json({ message: "Your alert was flagged as potential spam and was not added!" });
+        }
+
+        // Save valid alert
+        const newAlert = new emergencyModel({
+            title,
+            description,
+            location,
+            alertType,
+            ward_no
+        });
+
+        await newAlert.save();
+        res.status(201).json({ message: "✅ Emergency alert reported!", alert: newAlert });
+
+    } catch (error) {
+        console.error("❌ Your alert was flagged as potential spam and was not added!:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+
+app.get("/getemergency", async (req, res) => {
+        try {
+            const emergency = await emergencyModel.find().sort({ createdAt: -1 }); // Latest first
+    
+            res.status(200).json(emergency);
+        } catch (error) {
+            console.error("❌ Error fetching emergency:", error);
+            res.status(500).json({ message: "Failed to fetch emergency" });
+        }
+    });
+    
+// app.post("/deleteemergency", async (req, res) => {
+//         try {
+//             const { id } = req.body;
+    
+//             if (!id) {
+//                 return res.status(400).json({ message: "Emergency ID is required" });
+//             }
+    
+//             const deleteemergency = await emergencyModel.findByIdAndDelete(id);
+    
+//             if (!deleteemergency) {
+//                 return res.status(404).json({ message: "Emergency not found" });
+//             }
+    
+//             res.status(200).json({ message: "Emergency deleted successfully" });
+//         } catch (error) {
+//             console.error("❌ Error deleting Emergency:", error);
+//             res.status(500).json({ message: "Failed to delete Emergency" });
+//         }
+//     });
+
+//Like Emergency 
+app.post("/reportemergency", async (req, res) => {
+    try {
+        const { id } = req.body;
+        const alert = await emergencyModel.findById(id);
+        if (!alert) {
+            return res.status(404).json({ message: "Alert not found" });
+        }
+
+        alert.reports = (alert.reports || 0) + 1; // Increment report count
+
+        if (alert.reports >= 5) {
+            // Auto-hide or delete if too many reports
+            await emergencyModel.findByIdAndDelete(id);
+            return res.status(200).json({ message: "🚨 Alert removed due to multiple reports!" });
+        } else {
+            await alert.save();
+            return res.status(200).json({ message: "🚩 Alert reported!", alert });
+        }
+    } catch (error) {
+        console.error("❌ Error reporting alert:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+//Alert Email
+const sendEmergencyAlertEmail = async (alert, users, ward_no) => {
+    try {
+      // Ensure ward_no is treated as a string
+      const wardNoAsString = String(ward_no);
+      
+      // Filter users who belong to the same ward
+      const usersInSameWard = users.filter(user => String(user.ward_no) === wardNoAsString);
+  
+      // Check if there are any users in that ward
+      if (usersInSameWard.length === 0) {
+        console.log("No users found in this ward.");
+        return;
+      }
+  
+      // Email content template
+      const emailContent = `
+        <h3>Dear Resident,</h3>
+        <p>We are writing to inform you about an urgent situation in your area.</p>
+        <p><strong>Alert:</strong> ${alert.title}</p>
+        <p><strong>Description:</strong> ${alert.description}</p>
+        <p><strong>Date:</strong> ${new Date(alert.createdAt).toLocaleString()}</p>
+        <p>We urge you to take the necessary precautions and stay safe.</p>
+        <br>
+        <p>Regards,</p>
+        <p><strong>Your Charity App Team</strong></p>
+      `;
+      
+      // Loop over each user in the same ward and send the email
+      for (const user of usersInSameWard) {
+        // Clone the sendSmtpEmail object for each iteration
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+        
+        sendSmtpEmail.subject = `Urgent: Emergency Alert for Your Ward – ${alert.title}`;
+        sendSmtpEmail.htmlContent = emailContent;
+        sendSmtpEmail.sender = { name: "CharityApp", email: "charityapp2025@gmail.com" };
+        sendSmtpEmail.to = [{ email: user.email }];
+        
+        // Send the email using Brevo API and check the response
+        const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+  
+        // Log the response to check if the email was sent
+        console.log("Email Response:", response);
+        
+        if (response && response.messageId) {
+          console.log(`✅ Email successfully sent with messageId: ${response.messageId}`);
+        } else {
+          console.log("❌ Failed to send email:", response);
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error sending alert emails:", error);
+    }
+  };
+  
 
 //-----------------------------------------------------SOCIAL WORKER DASHBOARD------------------------------------------------------------------
  
