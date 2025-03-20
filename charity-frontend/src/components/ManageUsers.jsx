@@ -1,13 +1,13 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import AdminNavbar from './AdminNavbar';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import AdminNavbar from "./AdminNavbar";
 
 const ManageUsers = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState("");
 
   const fetchData = () => {
-    const token = sessionStorage.getItem('token');
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       console.log("No token found! Redirecting to login...");
@@ -15,14 +15,14 @@ const ManageUsers = () => {
       return;
     }
 
-    console.log("🔹 Token being sent:", token); // Debugging step
+    console.log("🔹 Token being sent:", token);
 
     axios
       .post(
-        'http://localhost:3030/manageusers',
+        "http://localhost:3030/manageusers",
         {},
         {
-          headers: { token, 'Content-Type': 'application/json' },
+          headers: { token, "Content-Type": "application/json" },
         }
       )
       .then((response) => {
@@ -43,11 +43,10 @@ const ManageUsers = () => {
     fetchData();
   }, []);
 
- 
   return (
     <div>
       <div className="container">
-        <AdminNavbar/>
+        <AdminNavbar />
         <div className="row">
           <div className="col col-12">
             <h4 className="text-center my-3">MANAGE USERS</h4>

@@ -34,11 +34,9 @@ const SocialWorkersLogin = () => {
           console.log(userId);
           console.log(token);
 
-          // Store user details in session storage
           sessionStorage.setItem("userId", userId);
           sessionStorage.setItem("token", token);
 
-          // Redirect to the dashboard
           navigate("/socialworkersdashboard");
         }
       })
@@ -53,7 +51,7 @@ const SocialWorkersLogin = () => {
       <Nav />
       <div className="container">
         <div className="row">
-          {/* Left Side - Image Card */}
+          {}
           <div className="col-lg-6">
             <div className="card border-light mb-3">
               <img
@@ -65,11 +63,14 @@ const SocialWorkersLogin = () => {
             </div>
           </div>
 
-          {/* Right Side - Login Form */}
+          {}
           <div className="col-lg-6">
             <div className="card border-light mb-3">
               <div className="card-body">
-                <br></br><br></br><br></br><br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
 
                 <div className="row g-3">
                   <div className="col-12">

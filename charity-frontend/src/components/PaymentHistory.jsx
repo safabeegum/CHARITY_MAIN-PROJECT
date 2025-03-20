@@ -1,15 +1,14 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import UserNavbar from './UserNavbar';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import UserNavbar from "./UserNavbar";
 
 const PaymentHistory = () => {
   const [payments, setPayments] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // ✅ FETCH PAYMENT HISTORY
   const fetchData = () => {
-    const token = sessionStorage.getItem('token');
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       console.log("No token found! Redirecting to login...");
@@ -17,21 +16,21 @@ const PaymentHistory = () => {
       return;
     }
 
-    console.log("🔹 Token being sent:", token);
+    console.log("Token being sent:", token);
 
     axios
       .post(
-        'http://localhost:3030/getuserpayment',
+        "http://localhost:3030/getuserpayment",
         {},
         {
-          headers: { 
-            Authorization: `Bearer ${token}`, 
-            'Content-Type': 'application/json' 
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       )
       .then((response) => {
-        console.log("✅ Response Data:", response.data);
+        console.log("Response Data:", response.data);
         if (Array.isArray(response.data)) {
           setPayments(response.data);
         } else {
@@ -39,7 +38,7 @@ const PaymentHistory = () => {
         }
       })
       .catch((error) => {
-        console.error("❌ Axios Error:", error.response?.data || error.message);
+        console.error("Axios Error:", error.response?.data || error.message);
         setError("Error fetching payment history. Please try again later.");
       })
       .finally(() => {
@@ -47,38 +46,36 @@ const PaymentHistory = () => {
       });
   };
 
-  // ✅ DOWNLOAD RECEIPT FUNCTION 🚀💯🔥
   const downloadReceipt = (paymentId) => {
-    const token = sessionStorage.getItem('token');
+    const token = sessionStorage.getItem("token");
 
     axios
       .post(
-        'http://localhost:3030/downloadreceipt',
+        "http://localhost:3030/downloadreceipt",
         { paymentId },
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          responseType: 'blob' // 👈 Important for downloading PDF
+          responseType: "blob", // 👈 Important for downloading PDF
         }
       )
       .then((response) => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
-        link.setAttribute('download', `Receipt_${paymentId}.pdf`);
+        link.setAttribute("download", `Receipt_${paymentId}.pdf`);
         document.body.appendChild(link);
         link.click();
         link.remove();
       })
       .catch((error) => {
-        console.error("❌ Error downloading receipt:", error);
-        alert("🚫 Failed to download receipt. Please try again later.");
+        console.error("Error downloading receipt:", error);
+        alert("Failed to download receipt. Please try again later.");
       });
   };
 
-  // ✅ CALL FETCH DATA ON PAGE LOAD
   useEffect(() => {
     fetchData();
   }, []);
@@ -89,9 +86,9 @@ const PaymentHistory = () => {
         <UserNavbar />
         <div className="row">
           <div className="col col-12">
-            <h4 className="text-center my-3">💸 PAYMENT HISTORY 💸</h4>
+            <h4 className="text-center my-3">PAYMENT HISTORY </h4>
 
-            {/* ✅ SHOW LOADING STATE */}
+            {/* SHOW LOADING STATE */}
             {loading ? (
               <div className="text-center my-5">
                 <h5>⏳ Loading Payment History...</h5>
@@ -115,18 +112,24 @@ const PaymentHistory = () => {
                     payments.map((payment, index) => (
                       <tr key={index}>
                         <td>{payment._id}</td>
-                        <td><b>₹{payment.amount}</b></td>
+                        <td>
+                          <b>₹{payment.amount}</b>
+                        </td>
                         <td>{payment.method}</td>
                         <td>
-                          <span 
-                            className={`badge ${payment.status === 'success' ? 'bg-success' : 'bg-danger'}`}
+                          <span
+                            className={`badge ${
+                              payment.status === "success"
+                                ? "bg-success"
+                                : "bg-danger"
+                            }`}
                           >
                             {payment.status.toUpperCase()}
                           </span>
                         </td>
                         <td>{new Date(payment.createdAt).toLocaleString()}</td>
                         <td>
-                          <button 
+                          <button
                             className="btn btn-primary btn-sm"
                             onClick={() => downloadReceipt(payment._id)}
                           >
@@ -138,7 +141,7 @@ const PaymentHistory = () => {
                   ) : (
                     <tr>
                       <td colSpan="6" className="text-center">
-                        🚫 No payment history found.
+                        No payment history found.
                       </td>
                     </tr>
                   )}

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import UserNavbar from "./UserNavbar";
-import EditProfileModal from "./EditProfileModal"; // Importing our new modal
-
+import EditProfileModal from "./EditProfileModal";
 const MyProfile = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
@@ -118,7 +117,10 @@ const MyProfile = () => {
               </div>
             ))}
 
-            <button style={styles.editButton} onClick={() => setIsEditing(true)}>
+            <button
+              style={styles.editButton}
+              onClick={() => setIsEditing(true)}
+            >
               EDIT
             </button>
           </div>
@@ -150,10 +152,28 @@ const styles = {
     boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
   },
   title: { textAlign: "center", fontSize: "20px", fontWeight: "bold" },
-  profileCard: { padding: "20px", borderRadius: "8px", backgroundColor: "#f9f9f9" },
-  imageContainer: { display: "flex", justifyContent: "center", marginBottom: "15px" },
-  profileImage: { width: "100px", height: "100px", borderRadius: "50%", objectFit: "cover" },
-  row: { display: "flex", justifyContent: "space-between", borderBottom: "1px solid #ddd", padding: "10px 0" },
+  profileCard: {
+    padding: "20px",
+    borderRadius: "8px",
+    backgroundColor: "#f9f9f9",
+  },
+  imageContainer: {
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: "15px",
+  },
+  profileImage: {
+    width: "100px",
+    height: "100px",
+    borderRadius: "50%",
+    objectFit: "cover",
+  },
+  row: {
+    display: "flex",
+    justifyContent: "space-between",
+    borderBottom: "1px solid #ddd",
+    padding: "10px 0",
+  },
   label: { fontWeight: "bold", color: "#555" },
   editButton: {
     display: "block",

@@ -37,41 +37,41 @@ const RewardsList = () => {
 
   return (
     <div>
-      <AdminNavbar/>
-   
-    <div className="container mt-5">
-      <h3 className="text-center fw-bold mb-4 text-danger">REWARD LIST</h3>
+      <AdminNavbar />
 
-      {loading && <p className="text-center">Loading...</p>}
-      {error && <p className="text-danger text-center">{error}</p>}
+      <div className="container mt-5">
+        <h3 className="text-center fw-bold mb-4 text-danger">REWARD LIST</h3>
 
-      {!loading && !error && rewards.length > 0 ? (
-        <table className="table table-bordered mt-3">
-          <thead className="table-dark">
-            <tr>
-              <th>USER NAME</th>
-              <th>EMAIL</th>
-              <th>UPI ID</th>
-              <th>AMOUNT</th>
-              <th>CLAIMED AT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rewards.map((reward) => (
-              <tr key={reward._id}>
-                <td>{reward.userId?.name || "N/A"}</td>
-                <td>{reward.userId?.email || "N/A"}</td>
-                <td>{reward.upiId}</td>
-                <td>₹{reward.amount.toFixed(2)}</td>
-                <td>{new Date(reward.claimedAt).toLocaleString()}</td>
+        {loading && <p className="text-center">Loading...</p>}
+        {error && <p className="text-danger text-center">{error}</p>}
+
+        {!loading && !error && rewards.length > 0 ? (
+          <table className="table table-bordered mt-3">
+            <thead className="table-dark">
+              <tr>
+                <th>USER NAME</th>
+                <th>EMAIL</th>
+                <th>UPI ID</th>
+                <th>AMOUNT</th>
+                <th>CLAIMED AT</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p className="text-center">No rewards found.</p>
-      )}
-    </div>
+            </thead>
+            <tbody>
+              {rewards.map((reward) => (
+                <tr key={reward._id}>
+                  <td>{reward.userId?.name || "N/A"}</td>
+                  <td>{reward.userId?.email || "N/A"}</td>
+                  <td>{reward.upiId}</td>
+                  <td>₹{reward.amount.toFixed(2)}</td>
+                  <td>{new Date(reward.claimedAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-center">No rewards found.</p>
+        )}
+      </div>
     </div>
   );
 };

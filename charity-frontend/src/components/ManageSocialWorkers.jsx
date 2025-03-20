@@ -14,9 +14,9 @@ const ManageSocialWorkers = () => {
     password: "",
   });
 
-  // Function to generate a random 4-character password
   const generatePassword = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let password = "";
     for (let i = 0; i < 4; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -24,13 +24,11 @@ const ManageSocialWorkers = () => {
     return password;
   };
 
-  // Handle Input Change
   const inputHandler = (event) => {
     const { name, value } = event.target;
     setInput({ ...input, [name]: value });
   };
 
-  // Open Modal and Generate Password
   const openModal = () => {
     setInput({
       org_name: "",
@@ -42,7 +40,6 @@ const ManageSocialWorkers = () => {
     setIsModalOpen(true);
   };
 
-  // Handle Form Submission
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -63,7 +60,6 @@ const ManageSocialWorkers = () => {
       });
   };
 
-  // Fetch Data from Server
   const fetchData = () => {
     const token = sessionStorage.getItem("token");
 
@@ -105,7 +101,7 @@ const ManageSocialWorkers = () => {
       <button className="btn btn-outline-primary" onClick={openModal}>
         + ADD SOCIAL WORKERS
       </button>
-    <br></br>
+      <br></br>
       {/* Modal */}
       {isModalOpen && (
         <div
@@ -207,7 +203,13 @@ const ManageSocialWorkers = () => {
                 }}
               />
 
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "10px",
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -269,7 +271,9 @@ const ManageSocialWorkers = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center">No organizations found.</td>
+                <td colSpan="5" className="text-center">
+                  No organizations found.
+                </td>
               </tr>
             )}
           </tbody>

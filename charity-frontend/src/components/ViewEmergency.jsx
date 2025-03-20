@@ -3,60 +3,62 @@ import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFlag } from "@fortawesome/free-solid-svg-icons";
 import "bootstrap/dist/css/bootstrap.min.css";
-import SocialWorkersNavbar from "./SocialWorkersNavbar";
+import UserNavbar from "./UserNavbar";
 
 const ViewEmergency = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [reportLoading, setReportLoading] = useState(null); // Track report button state
+  const [reportLoading, setReportLoading] = useState(null);
 
   useEffect(() => {
     fetchAlerts();
   }, []);
 
-  // Fetch Emergency Alerts
   const fetchAlerts = async () => {
     try {
       setLoading(true);
       const response = await axios.get("http://localhost:3030/getemergency");
       setAlerts(response.data);
-      setError(null); // Reset error on successful fetch
+      setError(null);
     } catch (error) {
-      console.error("❌ Error fetching alerts:", error);
+      console.error("Error fetching alerts:", error);
       setError("Failed to load alerts. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Report Emergency Alert
   const handleReport = async (id) => {
-    if (!window.confirm("Are you sure you want to report this emergency alert?")) return;
+    if (
+      !window.confirm("Are you sure you want to report this emergency alert?")
+    )
+      return;
 
     try {
-      setReportLoading(id); // Disable report button for the clicked alert
+      setReportLoading(id);
       await axios.post("http://localhost:3030/reportemergency", { id });
-      fetchAlerts(); // Refresh alerts after reporting
-      alert("🚩 Emergency alert reported!");
+      fetchAlerts();
+      alert("Emergency alert reported!");
     } catch (error) {
-      console.error("❌ Error reporting alert:", error);
-      alert("❌ Failed to report emergency.");
+      console.error("Error reporting alert:", error);
+      alert("Failed to report emergency.");
     } finally {
-      setReportLoading(null); // Re-enable report button
+      setReportLoading(null);
     }
   };
 
   return (
     <div>
-      <SocialWorkersNavbar />
+      <UserNavbar />
       <div className="container mt-4">
-        <h4 className="text-center fw-bold mb-4 text-danger">🚨 EMERGENCY ALERTS</h4>
+        <h4 className="text-center fw-bold mb-4 text-danger">
+          🚨 EMERGENCY ALERTS
+        </h4>
 
-        {/* Error Message */}
+        {}
         {error && <div className="alert alert-danger text-center">{error}</div>}
-
-        {/* Display Alerts */}
+        {}
         {loading ? (
           <h5 className="text-center">Loading...</h5>
         ) : alerts.length === 0 ? (
@@ -87,7 +89,7 @@ const ViewEmergency = () => {
                     <button
                       className="btn btn-warning"
                       onClick={() => handleReport(alert._id)}
-                      disabled={reportLoading === alert._id} // Disable button while reporting
+                      disabled={reportLoading === alert._id}
                     >
                       <FontAwesomeIcon icon={faFlag} /> Report
                     </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import Confetti from "react-confetti";
 
 const Quiz = () => {
@@ -90,9 +90,9 @@ const Quiz = () => {
       }
 
       const data = await response.json();
-      console.log("✅ Score saved successfully:", data);
+      console.log("Score saved successfully:", data);
     } catch (error) {
-      console.error("❌ Error saving score:", error);
+      console.error("Error saving score:", error);
       alert("Failed to save score. Please try again.");
     } finally {
       setLoading(false);
@@ -148,8 +148,7 @@ const Quiz = () => {
 
         {isFinished ? (
           <div>
-            <h2 className="text-center">🎉 Quiz Completed! 🎉</h2>
-            
+            <h2 className="text-center">Quiz Completed!!! </h2>
           </div>
         ) : (
           <div>
@@ -161,7 +160,9 @@ const Quiz = () => {
                   key={index}
                   onClick={() => handleAnswerSelection(option)}
                   className={`btn btn-lg ${
-                    userAnswer === option ? "btn-info text-white" : "btn-outline-secondary"
+                    userAnswer === option
+                      ? "btn-info text-white"
+                      : "btn-outline-secondary"
                   }`}
                 >
                   {option}
@@ -175,20 +176,29 @@ const Quiz = () => {
               className="btn btn-success btn-lg w-100 mt-4"
               style={styles.button}
             >
-              Submit Answer ✅
+              Submit Answer
             </button>
           </div>
         )}
 
         <div className="mt-4">
           <p className="text-center mb-1">
-            <strong>Question {currentQuestion + 1} of {questions.length}</strong>
+            <strong>
+              Question {currentQuestion + 1} of {questions.length}
+            </strong>
           </p>
           <div style={styles.progressBar}>
-            <div style={styles.progressFill(((currentQuestion + 1) / questions.length) * 100)} />
+            <div
+              style={styles.progressFill(
+                ((currentQuestion + 1) / questions.length) * 100
+              )}
+            />
           </div>
           <p className="text-center mt-2 fs-5">
-            Score: <strong>{score} / {questions.length}</strong>
+            Score:{" "}
+            <strong>
+              {score} / {questions.length}
+            </strong>
           </p>
         </div>
       </div>

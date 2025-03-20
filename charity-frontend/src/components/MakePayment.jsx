@@ -6,41 +6,45 @@ const MakePayment = () => {
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
   const navigate = useNavigate();
-  const { postId } = useParams();  // ✅ Capture the post ID from URL
+  const { postId } = useParams();
 
   const handleNext = (e) => {
     e.preventDefault();
 
-    // ✅ Fetch userId from sessionStorage
     const userId = sessionStorage.getItem("userId");
-   
 
-
-    // ❌ If user is not logged in, show an alert and redirect to login
     if (!userId) {
       alert("Session expired! Please log in again.");
       navigate("/login");
       return;
     }
 
-    // ❌ Validate input amount
     if (!amount || amount <= 0) {
       alert("Enter a valid amount");
       return;
     }
 
-    // ✅ Store userId in sessionStorage again (just in case)
     sessionStorage.setItem("userId", userId);
 
-    // ✅ Pass postId in URL
     navigate(`/paymentdetails/${method}/${amount}/${postId}`);
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(to right, #f8f9fa, #eef2f3)" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(to right, #f8f9fa, #eef2f3)",
+      }}
+    >
       <UserNavbar />
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "65vh" }}>
-        <div className="card p-4 shadow-lg border-0 rounded" style={{ width: "550px", backgroundColor: "white" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "65vh" }}
+      >
+        <div
+          className="card p-4 shadow-lg border-0 rounded"
+          style={{ width: "550px", backgroundColor: "white" }}
+        >
           <h3 className="text-center mb-3 text-danger">Make a Payment</h3>
           <form onSubmit={handleNext} className="payment-form">
             <label className="fw-bold">Enter Amount (₹):</label>
@@ -53,14 +57,22 @@ const MakePayment = () => {
             />
 
             <label className="fw-bold">Select Payment Method:</label>
-            <select value={method} onChange={(e) => setMethod(e.target.value)} className="form-control mb-3">
-              <option value="" disabled>----SELECT PAYMENT METHOD----</option>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="form-control mb-3"
+            >
+              <option value="" disabled>
+                ----SELECT PAYMENT METHOD----
+              </option>
               <option value="card">💳 Credit / Debit Card</option>
               <option value="upi">📲 UPI</option>
               <option value="bank">🏦 Bank Transfer</option>
             </select>
 
-            <button type="submit" className="btn btn-danger w-100">Next</button>
+            <button type="submit" className="btn btn-danger w-100">
+              Next
+            </button>
           </form>
         </div>
       </div>

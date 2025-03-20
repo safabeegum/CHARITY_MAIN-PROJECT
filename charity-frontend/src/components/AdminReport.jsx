@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import AdminNavbar from "./AdminNavbar";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-const COLORS = ["#28a745", "#17a2b8", "#ffc107", "#dc3545", "#6f42c1", "#fd7e14"];
-const MIN_SLICE_VALUE = 50; // Ensures small slices are visible
+const COLORS = [
+  "#28a745",
+  "#17a2b8",
+  "#ffc107",
+  "#dc3545",
+  "#6f42c1",
+  "#fd7e14",
+];
 
 const AdminReport = () => {
   const [report, setReport] = useState(null);
@@ -42,7 +58,9 @@ const AdminReport = () => {
     <div>
       <AdminNavbar />
       <div className="container mt-4">
-        <h3 className="text-center fw-bold mb-4 text-secondary">ADMIN REPORT</h3>
+        <h3 className="text-center fw-bold mb-4 text-secondary">
+          ADMIN REPORT
+        </h3>
         {loading && <p className="text-center">Loading...</p>}
         {error && <p className="text-danger text-center">{error}</p>}
 
@@ -51,12 +69,36 @@ const AdminReport = () => {
             {/* Small Info Boxes */}
             <div className="row">
               {[
-                { title: "TOTAL DONATIONS", value: report?.totalDonations ?? 0, bg: "bg-success" },
-                { title: "TOTAL GAME FUNDS", value: report?.totalGameFunds ?? 0, bg: "bg-info" },
-                { title: "TOTAL TRANSACTIONS", value: report?.totalTransactions ?? 0, bg: "bg-warning" },
-                { title: "TOTAL REWARDS", value: report?.totalRewards ?? 0, bg: "bg-danger" },
-                { title: "WALLET AMOUNT", value: report?.walletAmount ?? 0, bg: "bg-primary" },
-                { title: "PLATFORM EARNINGS", value: report?.platformEarnings ?? 0, bg: "bg-dark" }
+                {
+                  title: "TOTAL DONATIONS",
+                  value: report?.totalDonations ?? 0,
+                  bg: "bg-success",
+                },
+                {
+                  title: "TOTAL GAME FUNDS",
+                  value: report?.totalGameFunds ?? 0,
+                  bg: "bg-info",
+                },
+                {
+                  title: "TOTAL TRANSACTIONS",
+                  value: report?.totalTransactions ?? 0,
+                  bg: "bg-warning",
+                },
+                {
+                  title: "TOTAL REWARDS",
+                  value: report?.totalRewards ?? 0,
+                  bg: "bg-danger",
+                },
+                {
+                  title: "WALLET AMOUNT",
+                  value: report?.walletAmount ?? 0,
+                  bg: "bg-primary",
+                },
+                {
+                  title: "PLATFORM EARNINGS",
+                  value: report?.platformEarnings ?? 0,
+                  bg: "bg-dark",
+                },
               ].map((box, index) => (
                 <div key={index} className="col-md-4 col-lg-2 mb-3">
                   <div className={`card text-white ${box.bg} text-center`}>
@@ -79,11 +121,13 @@ const AdminReport = () => {
                     <Pie
                       data={[
                         { name: "Donations", value: report.totalDonations },
-                        { name: "Game Funds", value: report.totalGameFunds }
+                        { name: "Game Funds", value: report.totalGameFunds },
                       ]}
                       dataKey="value"
                       outerRadius={100}
-                      label={({ name, value }) => `${name}: ₹${value.toFixed(2)}`} // ✅ Proper label formatting
+                      label={({ name, value }) =>
+                        `${name}: ₹${value.toFixed(2)}`
+                      }
                       labelLine={true}
                     >
                       {COLORS.slice(0, 2).map((color, index) => (
@@ -101,8 +145,14 @@ const AdminReport = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
                     data={[
-                      { name: "Total Funds", funds: report.totalGameFunds + report.totalDonations },
-                      { name: "Transactions", transactions: report.totalTransactions }
+                      {
+                        name: "Total Funds",
+                        funds: report.totalGameFunds + report.totalDonations,
+                      },
+                      {
+                        name: "Transactions",
+                        transactions: report.totalTransactions,
+                      },
                     ]}
                   >
                     <XAxis dataKey="name" />
@@ -114,7 +164,6 @@ const AdminReport = () => {
                 </ResponsiveContainer>
               </div>
             </div>
-            
           </>
         )}
       </div>

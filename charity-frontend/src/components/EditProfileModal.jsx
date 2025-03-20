@@ -1,12 +1,24 @@
 import React from "react";
 
-const EditProfileModal = ({ handleInputChange, handleSubmit, setIsEditing }) => {
+const EditProfileModal = ({
+  handleInputChange,
+  handleSubmit,
+  setIsEditing,
+}) => {
   return (
     <div style={styles.modalOverlay}>
       <div style={styles.modalContent}>
         <h2 style={{ textAlign: "center" }}>EDIT PROFILE</h2>
         <form onSubmit={handleSubmit}>
-          {["Name", "Username", "Address", "Email", "Phone", "Ward Number", "Ward Name"].map((field, index) => {
+          {[
+            "Name",
+            "Username",
+            "Address",
+            "Email",
+            "Phone",
+            "Ward Number",
+            "Ward Name",
+          ].map((field, index) => {
             const fieldName = field.toLowerCase().replace(" ", "_");
             return (
               <input
@@ -22,7 +34,11 @@ const EditProfileModal = ({ handleInputChange, handleSubmit, setIsEditing }) => 
           })}
 
           <div style={styles.modalButtons}>
-            <button type="button" onClick={() => setIsEditing(false)} style={styles.cancelButton}>
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              style={styles.cancelButton}
+            >
               CANCEL
             </button>
             <button type="submit" style={styles.submitButton}>

@@ -18,50 +18,52 @@ const Emergency = () => {
     fetchAlerts();
   }, []);
 
-  // Fetch Emergency Alerts (Only Approved)
   const fetchAlerts = async () => {
     try {
       const response = await axios.get("http://localhost:3030/getemergency");
       setAlerts(response.data);
     } catch (error) {
-      console.error("❌ Error fetching alerts:", error);
+      console.error("Error fetching alerts:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Add New Emergency Alert
   const handleAdd = async () => {
-    if (!title.trim() || !description.trim() || !location.trim() || alertType === "default" || ward_no === "default") {
-      alert("⚠️ Please fill all fields and select a valid alert type!");
+    if (
+      !title.trim() ||
+      !description.trim() ||
+      !location.trim() ||
+      alertType === "default" ||
+      ward_no === "default"
+    ) {
+      alert("Please fill all fields and select a valid alert type!");
       return;
     }
 
     try {
-      // Post the emergency alert data to the backend
       const response = await axios.post("http://localhost:3030/addemergency", {
         title,
         description,
         location,
         alertType,
-        ward_no
+        ward_no,
       });
 
-      // Trigger email sending after alert is added successfully
       if (response.data.success) {
-        alert("✅ Emergency alert reported and emails sent!");
+        alert("Emergency alert reported and emails sent!");
       } else {
-        alert("❌ Failed to report the emergency alert.");
+        alert("Failed to report the emergency alert.");
       }
 
       setTitle("");
       setDescription("");
       setLocation("");
-      setAlertType("default"); // Reset dropdown
+      setAlertType("default");
       setWardNo("default");
-      fetchAlerts(); // Refresh alerts
+      fetchAlerts();
     } catch (error) {
-      console.error("❌ Error adding alert:", error);
+      console.error("Error adding alert:", error);
       alert("Your alert was flagged as potential spam and was not added!");
     }
   };
@@ -70,7 +72,9 @@ const Emergency = () => {
     <div>
       <SocialWorkersNavbar />
       <div className="container mt-4">
-        <h4 className="text-center fw-bold mb-4 text-danger">🚨 EMERGENCY ALERTS</h4>
+        <h4 className="text-center fw-bold mb-4 text-danger">
+          🚨 EMERGENCY ALERTS
+        </h4>
 
         {/* Add Alert Form */}
         <div className="mb-3 p-3 border rounded">

@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ✅ Define `calculateWinner` function
 const calculateWinner = (board) => {
   const winningCombinations = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8],
-    [0, 3, 6], [1, 4, 7], [2, 5, 8],
-    [0, 4, 8], [2, 4, 6],
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
   ];
 
   for (let combination of winningCombinations) {
     const [a, b, c] = combination;
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a]; // Return the winner ('X' or 'O')
+      return board[a];
     }
   }
-  return null; // No winner yet
+  return null;
 };
 
 const TicTacToe = () => {
@@ -34,7 +38,7 @@ const TicTacToe = () => {
         setPlayerScore((prevScore) => prevScore + 1);
         saveScore(1);
       } else {
-        setGameResult("❌ You Lose! ❌");
+        setGameResult("You Lose! ");
         saveScore(0);
       }
     } else if (!board.includes(null)) {
@@ -45,64 +49,69 @@ const TicTacToe = () => {
 
   useEffect(() => {
     if (!isXNext && !winner) {
-      setTimeout(makeAIMove, 500); // ✅ AI moves automatically after 500ms
+      setTimeout(makeAIMove, 500);
     }
   }, [isXNext, board, winner]);
 
   const saveScore = async (score) => {
     try {
-        const token = sessionStorage.getItem("token");
-        if (!token) {
-            console.error("🚨 No authentication token found!");
-            return;
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        console.error("No authentication token found!");
+        return;
+      }
+
+      console.log("Sending score to backend:", score);
+
+      const response = await fetch(
+        "http://localhost:3030/api/saveTicTacToeScore",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ score }),
         }
+      );
 
-        console.log("📌 Sending score to backend:", score);
-
-        const response = await fetch("http://localhost:3030/api/saveTicTacToeScore", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ score }),
-        });
-
-        const data = await response.json();
-        console.log("✅ Response from backend:", data);
+      const data = await response.json();
+      console.log("Response from backend:", data);
     } catch (error) {
-        console.error("❌ Error saving score:", error);
+      console.error("Error saving score:", error);
     }
-};
-
+  };
 
   const handleClick = (index) => {
-    if (board[index] || gameResult) return; // ✅ Prevent clicking on occupied cells
+    if (board[index] || gameResult) return;
 
     const newBoard = [...board];
-    newBoard[index] = "X"; // Player move
+    newBoard[index] = "X";
     setBoard(newBoard);
-    setIsXNext(false); // ✅ AI moves next
+    setIsXNext(false);
   };
 
   const makeAIMove = () => {
     let availableMoves = board
       .map((cell, index) => (cell === null ? index : null))
       .filter((index) => index !== null);
-      
+
     if (availableMoves.length === 0 || winner) return;
 
-    let aiMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+    let aiMove =
+      availableMoves[Math.floor(Math.random() * availableMoves.length)];
 
     let newBoard = [...board];
-    newBoard[aiMove] = "O"; // ✅ AI move
+    newBoard[aiMove] = "O";
     setBoard(newBoard);
-    setIsXNext(true); // ✅ Player moves next
+    setIsXNext(true);
   };
 
   return (
     <div style={styles.TTTmain}>
-      <a href="/gameindex" className="btn btn-dark">BACK TO GAME CORNER</a>
+      <a href="/gameindex" className="btn btn-dark">
+        BACK TO GAME CORNER
+      </a>
       <br />
       <div style={{ ...styles.TTTgame }}>
         <h1 style={styles.heading}>Tic Tac Toe</h1>
@@ -113,12 +122,19 @@ const TicTacToe = () => {
         )}
         <div style={styles.TTTboard}>
           {board.map((cell, index) => (
-            <div key={index} style={styles.TTTcell} onClick={() => handleClick(index)}>
+            <div
+              key={index}
+              style={styles.TTTcell}
+              onClick={() => handleClick(index)}
+            >
               {cell}
             </div>
           ))}
         </div>
-        <button style={styles.TTTrestart} onClick={() => navigate("/gameindex")}>
+        <button
+          style={styles.TTTrestart}
+          onClick={() => navigate("/gameindex")}
+        >
           RESTART
         </button>
       </div>
@@ -126,19 +142,18 @@ const TicTacToe = () => {
   );
 };
 
-// ✅ Styles (Not changed)
 const styles = {
   TTTmain: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    background: "linear-gradient(to bottom, #2a0a52, #3d0e70)", // Dark Purple Gradient
+    background: "linear-gradient(to bottom, #2a0a52, #3d0e70)",
     flexDirection: "column",
   },
   TTTgame: {
     textAlign: "center",
-    backgroundColor: "#2a0a52", // Dark Purple
+    backgroundColor: "#2a0a52",
     padding: "20px",
     borderRadius: "10px",
     border: "2px solid white",

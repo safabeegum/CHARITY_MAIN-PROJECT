@@ -19,17 +19,14 @@ const PaymentDetails = () => {
     ifscCode: "",
   });
 
-  // ✅ Handle Input Change
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle Payment Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
-      // ✅ Step 1: Initiate Payment API 💸
       const response = await fetch("http://localhost:3030/makepayment", {
         method: "POST",
         headers: {
@@ -46,7 +43,6 @@ const PaymentDetails = () => {
 
       const result = await response.json();
 
-      // ✅ Handle Token Expiry or Unauthorized Access 🚨
       if (response.status === 401) {
         alert("Session expired. Please login again.");
         sessionStorage.clear();
@@ -54,40 +50,37 @@ const PaymentDetails = () => {
         return;
       }
 
-      // ✅ Check If Payment Was Initiated Successfully 💸
       if (result.status !== "Success") {
         alert("Payment initiation failed. Please try again.");
         return;
       }
 
-      // ✅ Step 2: Process Payment API 💳
       const paymentId = result.paymentId;
       if (!paymentId) {
         alert("Payment ID not received. Payment failed!");
         return;
       }
 
-      const processResponse = await fetch("http://localhost:3030/processpayment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ paymentId: paymentId }),
-      });
+      const processResponse = await fetch(
+        "http://localhost:3030/processpayment",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ paymentId: paymentId }),
+        }
+      );
 
       const processResult = await processResponse.json();
 
-      // ✅ Handle Payment Processing Response
       if (processResult.status !== "Success") {
         alert("Payment processing failed. Please try again.");
         return;
       }
-
-      // ✅ Payment Successful: Show Modal 💰
       setShowModal(true);
 
-      // ✅ Reset Form Data
       setTimeout(() => {
         setShowModal(false);
         setFormData({
@@ -100,14 +93,12 @@ const PaymentDetails = () => {
           ifscCode: "",
         });
       }, 3000);
-
     } catch (error) {
-      console.error("❌ Payment Error:", error);
+      console.error("Payment Error:", error);
       alert("An error occurred while processing your payment.");
     }
   };
-  
-  
+
   return (
     <div>
       <UserNavbar />
@@ -119,11 +110,9 @@ const PaymentDetails = () => {
           <h3 className="text-center fw-bold text-success">
             Enter Payment Details
           </h3>
-          <p className="text-center fw-bold text-danger">
-            Amount: ₹{amount}
-          </p>
+          <p className="text-center fw-bold text-danger">Amount: ₹{amount}</p>
 
-          {/* ✅ Payment Form */}
+          {/*Payment Form */}
           <form onSubmit={handleSubmit} className="payment-form">
             {method === "card" && (
               <>
@@ -187,7 +176,7 @@ const PaymentDetails = () => {
               </>
             )}
 
-{method === "bank" && (
+            {method === "bank" && (
               <>
                 <label className="fw-bold">Account Number:</label>
                 <input
@@ -213,7 +202,7 @@ const PaymentDetails = () => {
               </>
             )}
 
-            {/* ✅ Submit Payment */}
+            {/* Submit Payment */}
             <button type="submit" className="btn btn-success w-100">
               Pay Now
             </button>
@@ -221,7 +210,7 @@ const PaymentDetails = () => {
         </div>
       </div>
 
-      {/* ✅ Modal Confirmation */}
+      {/*Modal Confirmation */}
       {showModal && (
         <div
           className="modal fade show d-block"
@@ -231,9 +220,7 @@ const PaymentDetails = () => {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title text-success">
-                  Payment Successful
-                </h5>
+                <h5 className="modal-title text-success">Payment Successful</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -242,8 +229,8 @@ const PaymentDetails = () => {
               </div>
               <div className="modal-body text-center">
                 <p className="fw-bold">
-                  Your payment of ₹{amount} via{" "}
-                  {method.toUpperCase()} was successful!
+                  Your payment of ₹{amount} via {method.toUpperCase()} was
+                  successful!
                 </p>
                 <p className="text-muted">
                   Thank you for supporting this cause.

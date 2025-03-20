@@ -50,6 +50,7 @@ import Announcements from './components/Announcements';
 import UserAnnouncements from './components/UserAnnouncements';
 import Emergency from './components/Emergency';
 import ViewEmergency from './components/ViewEmergency';
+import TransactionList from './components/TransactionList';
 
 
 function App() {
@@ -108,7 +109,7 @@ function App() {
         <Route path='/userannouncements' element={<UserAnnouncements/>}/> 
         <Route path='/emergency' element={<Emergency/>}/> 
         <Route path='/viewemergency' element={<ViewEmergency/>}/> 
-        
+        <Route path='/transactionlist' element={<TransactionList/>}/>      
       </Routes>
       </BrowserRouter>
     </div>

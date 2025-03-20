@@ -38,7 +38,7 @@ const ViewReports = () => {
         setTotalTransactions(totalPostTransactions + gameReports.length);
       })
       .catch((err) => {
-        console.error("❌ Failed to fetch reports", err);
+        console.error("Failed to fetch reports", err);
         setError("Failed to load reports. Please try again.");
       })
       .finally(() => {

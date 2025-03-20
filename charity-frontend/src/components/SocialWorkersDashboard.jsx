@@ -9,7 +9,7 @@ import {
   faTasks,
   faFileAlt,
   faBullhorn,
-  faExclamationTriangle
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 
 const SocialWorkersDashboard = () => {
@@ -21,7 +21,7 @@ const SocialWorkersDashboard = () => {
   }, []);
 
   const fetchSocialWorkerPosts = async () => {
-    const email = sessionStorage.getItem("email"); // Get logged-in social worker's email
+    const email = sessionStorage.getItem("email");
 
     try {
       const response = await axios.post(
@@ -30,8 +30,8 @@ const SocialWorkersDashboard = () => {
       );
       setPosts(response.data);
     } catch (error) {
-      console.error("❌ Failed to fetch posts", error);
-      alert("❌ Failed to fetch posts");
+      console.error("Failed to fetch posts", error);
+      alert("Failed to fetch posts");
     } finally {
       setLoading(false);
     }
@@ -49,8 +49,16 @@ const SocialWorkersDashboard = () => {
               { href: "/addpost", icon: faPlusCircle, label: "ADD POSTS" },
               { href: "/manageposts", icon: faTasks, label: "MANAGE POSTS" },
               { href: "/viewreports", icon: faFileAlt, label: "VIEW REPORTS" },
-              { href: "/announcements", icon: faBullhorn , label: "COMMUNITY ANNOUNCEMENT" },
-              { href: "/emergency", icon: faExclamationTriangle , label: "EMERGENCY ALERT" },
+              {
+                href: "/announcements",
+                icon: faBullhorn,
+                label: "COMMUNITY ANNOUNCEMENT",
+              },
+              {
+                href: "/emergency",
+                icon: faExclamationTriangle,
+                label: "EMERGENCY ALERT",
+              },
             ].map((item, index) => (
               <li key={index} className="nav-item">
                 <a
@@ -68,7 +76,9 @@ const SocialWorkersDashboard = () => {
 
         {/* Main Content */}
         <div className="col-sm-9 p-4">
-        <h4><small>RECENT POSTS</small></h4>
+          <h4>
+            <small>RECENT POSTS</small>
+          </h4>
           <hr />
 
           {loading ? (
@@ -127,5 +137,3 @@ const SocialWorkersDashboard = () => {
 };
 
 export default SocialWorkersDashboard;
-
-

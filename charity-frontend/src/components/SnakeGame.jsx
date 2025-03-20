@@ -15,7 +15,10 @@ const SnakeGame = () => {
   const [shake, setShake] = useState(false);
 
   function generateFood() {
-    return { x: Math.floor(Math.random() * gridSize), y: Math.floor(Math.random() * gridSize) };
+    return {
+      x: Math.floor(Math.random() * gridSize),
+      y: Math.floor(Math.random() * gridSize),
+    };
   }
 
   useEffect(() => {
@@ -31,11 +34,20 @@ const SnakeGame = () => {
     const head = { ...newSnake[0] };
 
     switch (direction) {
-      case "UP": head.y -= 1; break;
-      case "DOWN": head.y += 1; break;
-      case "LEFT": head.x -= 1; break;
-      case "RIGHT": head.x += 1; break;
-      default: break;
+      case "UP":
+        head.y -= 1;
+        break;
+      case "DOWN":
+        head.y += 1;
+        break;
+      case "LEFT":
+        head.x -= 1;
+        break;
+      case "RIGHT":
+        head.x += 1;
+        break;
+      default:
+        break;
     }
 
     newSnake.unshift(head);
@@ -50,32 +62,41 @@ const SnakeGame = () => {
     if (checkCollision(head)) {
       setGameOver(true);
       triggerShakeEffect();
-      saveScore(score); // ✅ Score saved only when game ends
+      saveScore(score);
     }
 
     setSnake(newSnake);
   };
 
   const checkCollision = (head) => {
-    if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) return true;
-    return snake.some(segment => segment.x === head.x && segment.y === head.y);
+    if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize)
+      return true;
+    return snake.some(
+      (segment) => segment.x === head.x && segment.y === head.y
+    );
   };
 
   const changeDirection = (e) => {
     if (gameOver) return;
     const newDirection = e.key.replace("Arrow", "").toUpperCase();
     if (["UP", "DOWN", "LEFT", "RIGHT"].includes(newDirection)) {
-      if (!(direction === "UP" && newDirection === "DOWN") &&
-          !(direction === "DOWN" && newDirection === "UP") &&
-          !(direction === "LEFT" && newDirection === "RIGHT") &&
-          !(direction === "RIGHT" && newDirection === "LEFT")) {
+      if (
+        !(direction === "UP" && newDirection === "DOWN") &&
+        !(direction === "DOWN" && newDirection === "UP") &&
+        !(direction === "LEFT" && newDirection === "RIGHT") &&
+        !(direction === "RIGHT" && newDirection === "LEFT")
+      ) {
         setDirection(newDirection);
       }
     }
   };
 
   const restartGame = () => {
-    setSnake([{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }]);
+    setSnake([
+      { x: 5, y: 5 },
+      { x: 4, y: 5 },
+      { x: 3, y: 5 },
+    ]);
     setDirection("RIGHT");
     setFood(generateFood());
     setGameOver(false);
@@ -97,54 +118,74 @@ const SnakeGame = () => {
     try {
       const token = sessionStorage.getItem("token");
       if (!token) {
-        console.error("❌ No authentication token found!");
+        console.error("No authentication token found!");
         return;
       }
 
       console.log("📡 Sending Final Score:", finalScore);
 
-      const response = await fetch("http://localhost:3030/api/saveSnakeGameScore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ score: finalScore }),
-      });
+      const response = await fetch(
+        "http://localhost:3030/api/saveSnakeGameScore",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ score: finalScore }),
+        }
+      );
 
       const data = await response.json();
-      console.log("✅ Server Response:", data);
+      console.log("Server Response:", data);
 
       if (!response.ok) {
-        console.error("❌ Error saving score:", response.statusText);
+        console.error("Error saving score:", response.statusText);
       }
     } catch (error) {
-      console.error("❌ Error saving score:", error);
+      console.error("Error saving score:", error);
     }
   };
 
   return (
     <div style={styles.page}>
-      <Link to="/gameindex" style={styles.backButton}>BACK TO GAME CORNER</Link>
+      <Link to="/gameindex" style={styles.backButton}>
+        BACK TO GAME CORNER
+      </Link>
       <div style={styles.gameContainer}>
         <h1>Snake Game</h1>
         <h2>Score: {score}</h2>
         <div style={{ ...styles.board, ...(shake ? styles.shake : {}) }}>
           {Array.from({ length: gridSize }).map((_, row) =>
             Array.from({ length: gridSize }).map((_, col) => {
-              const isSnake = snake.some((segment) => segment.x === col && segment.y === row);
+              const isSnake = snake.some(
+                (segment) => segment.x === col && segment.y === row
+              );
               const isFood = food.x === col && food.y === row;
               return (
-                <div key={`${row}-${col}`} style={{ ...styles.cell, ...(isSnake ? styles.snake : {}), ...(isFood ? styles.food : {}) }} />
+                <div
+                  key={`${row}-${col}`}
+                  style={{
+                    ...styles.cell,
+                    ...(isSnake ? styles.snake : {}),
+                    ...(isFood ? styles.food : {}),
+                  }}
+                />
               );
             })
           )}
         </div>
-        {gameOver && <h2 style={styles.loseText}>❌ Game Over! ❌</h2>}
-        {gameOver && <button style={styles.button} onClick={restartGame}>Restart Game</button>}
+        {gameOver && <h2 style={styles.loseText}> Game Over! </h2>}
+        {gameOver && (
+          <button style={styles.button} onClick={restartGame}>
+            Restart Game
+          </button>
+        )}
       </div>
     </div>
   );
 };
 
-// Styles
 const styles = {
   page: {
     background: "linear-gradient(to bottom, #000000, #1a1a1a, #333333)",
@@ -157,14 +198,14 @@ const styles = {
   backButton: {
     textDecoration: "none",
     backgroundColor: "grey",
-    color: "white", // Updated purple to match text color in image
+    color: "white",
     padding: "10px 20px",
     borderRadius: "5px",
     fontSize: "16px",
     marginBottom: "15px",
   },
   gameContainer: {
-    backgroundColor: "linear-gradient(to right, #0a0a1a, #14142b, #1e1e3f)", 
+    backgroundColor: "linear-gradient(to right, #0a0a1a, #14142b, #1e1e3f)",
     padding: "20px",
     borderRadius: "10px",
     boxShadow: "0 0 15px rgba(255, 255, 255, 0.2)",
