@@ -1,19 +1,19 @@
 const Mongoose = require("mongoose");
 
 const quizSchema = new Mongoose.Schema({
-    userId: {
-        type: Mongoose.Schema.Types.ObjectId,
-        ref: "users",  // Reference to the User model
-        required: true,
-    },
-    score: {
-        type: Number,  // Store the highest score achieved
-        required: true,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,  // Timestamp when the quiz was played
-    },
+  userId: {
+    type: Mongoose.Schema.Types.ObjectId,
+    ref: "users",
+    required: true,
+  },
+  score: {
+    type: Number,
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const quizModel = Mongoose.model("quiz", quizSchema);

@@ -1,19 +1,21 @@
 const Mongoose = require("mongoose");
 
 const platformEarningSchema = new Mongoose.Schema(
-    {
-        amount: {
-            type: Number,
-            required: true
-        },
-        receivedAt: {
-            type: Date,
-            default: Date.now
-        }
+  {
+    amount: {
+      type: Number,
+      required: true,
     },
-    { timestamps: true }
+    receivedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
 );
 
-const platformEarningModel = Mongoose.model("platformearning", platformEarningSchema);
-
+const platformEarningModel = Mongoose.model(
+  "platformearning",
+  platformEarningSchema
+);
 module.exports = platformEarningModel;
