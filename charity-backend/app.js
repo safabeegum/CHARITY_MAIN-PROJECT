@@ -760,7 +760,7 @@ async function allocatePendingDonations() {
 }
 
 //Game Rewards
-cron.schedule('48 11 * * *', async () => {
+cron.schedule('20 9 * * *', async () => {
     console.log("Scheduled task triggered: Rewarding top scorers...");
     await addRewardsForTopScorers();
 });
@@ -817,27 +817,33 @@ app.get('/allwallets', async (req, res) => {
         console.log("No token provided!");
         return res.status(401).json({ status: "Token is missing" });
     }
+
     jwt.verify(token, "CharityApp", async (error, decoded) => {
         if (error) {
             console.log("JWT verification failed:", error.message);
             return res.status(403).json({ status: "Invalid Token", error: error.message });
         }
-        console.log("Token Verified! User:", decoded.email);
+
+        console.log("Token Verified! User:", decoded.email, "UserID:", decoded.userId);
+        
         try {
-            console.log("🔍 Fetching all wallets...");
-            const wallets = await walletModel.find().populate('userId', 'name username email phone');
-            if (!wallets.length) {
-                console.log("No wallets found!");
-                return res.status(404).json({ status: "No wallets found" });
+            console.log(`🔍 Fetching wallet for user: ${decoded.userId}`);
+            const wallet = await walletModel.findOne({ userId: decoded.userId }).populate('userId', 'name username email phone');
+
+            if (!wallet) {
+                console.log("No wallet found for this user!");
+                return res.status(404).json({ status: "No wallet found for this user" });
             }
-            console.log("Wallets Retrieved:", JSON.stringify(wallets, null, 2));
-            res.json(wallets);
+
+            console.log("Wallet Retrieved:", JSON.stringify(wallet, null, 2));
+            res.json(wallet);
         } catch (error) {
-            console.error("Error fetching wallets:", error);
+            console.error("Error fetching wallet:", error);
             res.status(500).json({ status: "Internal Server Error" });
         }
     });
 });
+
 
 //Claim Reward
 app.post("/claimreward", async (req, res) => {
@@ -865,7 +871,7 @@ app.post("/claimreward", async (req, res) => {
   });
 
 // Configure Brevo API Key
-const brevoApiKey = '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';
+const brevoApiKey = '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';
 SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = brevoApiKey;
 
 // Make Payment 
@@ -1307,15 +1313,26 @@ const FLAGGED_THRESHOLD = 3;
 
 app.post("/addemergency", async (req, res) => {
     try {
+        console.log("📩 Received request to /addemergency...");
+        console.log("📝 Request Body:", req.body);
+
         const { title, description, location, alertType, ward_no } = req.body;
+
         if (!title || !description || !location || !alertType || !ward_no) {
+            console.log("⚠️ Missing required fields. Rejecting request.");
             return res.status(400).json({ message: "All fields are required!" });
         }
+
         const alertText = `${title} ${description} ${location}`.toLowerCase();
         let flaggedCount = flaggedWords.filter(word => alertText.includes(word)).length;
+        console.log(`🚨 Checking for spam: ${flaggedCount} flagged words found.`);
+
         if (flaggedCount >= FLAGGED_THRESHOLD) {
+            console.log("❌ Alert flagged as spam! Blocking it...");
             return res.status(403).json({ message: "Your alert was flagged as potential spam and was not added!" });
         }
+
+        console.log("💾 Saving alert to database...");
         const newAlert = new emergencyModel({
             title,
             description,
@@ -1323,11 +1340,14 @@ app.post("/addemergency", async (req, res) => {
             alertType,
             ward_no
         });
-        await newAlert.save();
-        res.status(201).json({ message: "Emergency alert reported!", alert: newAlert });
+
+        const savedAlert = await newAlert.save();
+        console.log("✅ Alert saved successfully:", savedAlert);
+
+        res.status(201).json({ message: "Emergency alert reported!", alert: savedAlert });
     } catch (error) {
-        console.error("Your alert was flagged as potential spam and was not added!:", error);
-        res.status(500).json({ message: "Server error" });
+        console.error("❌ Error saving alert:", error);
+        res.status(500).json({ message: "Server error", error });
     }
 });
 
@@ -1364,50 +1384,106 @@ app.post("/reportemergency", async (req, res) => {
     }
 });
 
-//Alert Email
+//Send Alert Email
 const sendEmergencyAlertEmail = async (alert, users, ward_no) => {
     try {
-        const wardNoAsString = String(ward_no);
-        const usersInSameWard = users.filter(user => String(user.ward_no) === wardNoAsString);
-        console.log(`Found ${usersInSameWard.length} users in ward ${ward_no}`);
-        if (usersInSameWard.length === 0) {
-            console.log("No users found in this ward.");
+        console.log("🔹 Starting sendEmergencyAlertEmail function...");
+        console.log("🔸 Alert Details:", alert);
+        console.log("🔸 Ward No:", ward_no);
+        console.log("🔸 Total Users:", users.length);
+
+        if (!users.length) {
+            console.log("⚠️ No users in this ward, skipping emails.");
             return;
         }
-        const emailContent = `
-            <h3>Dear Resident,</h3>
-            <p>We are writing to inform you about an urgent situation in your area.</p>
-            <p><strong>Alert:</strong> ${alert.title}</p>
-            <p><strong>Description:</strong> ${alert.description}</p>
-            <p><strong>Date:</strong> ${new Date(alert.createdAt).toLocaleString()}</p>
-            <p>We urge you to take the necessary precautions and stay safe.</p>
-            <br>
-            <p>Regards,</p>
-            <p><strong>Your Charity App Team</strong></p>
-        `;
-        for (const user of usersInSameWard) {
+
+        console.log("🔹 Initializing SendinBlue API...");
+
+        const SibApiV3Sdk = require("sib-api-v3-sdk");
+        const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+        for (const user of users) {
+            if (!user.email) {
+                console.log(`⚠️ Skipping user with no email: ${user.name}`);
+                continue;
+            }
+
+            console.log(`📤 Sending email to ${user.email}...`);
+
+            const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+            sendSmtpEmail.subject = `🚨 Urgent Alert: ${alert.title}`;
+            sendSmtpEmail.htmlContent = `
+                <h3>Dear ${user.name},</h3>
+                <p>There is an emergency in your ward:</p>
+                <p><strong>Alert:</strong> ${alert.title}</p>
+                <p><strong>Description:</strong> ${alert.description}</p>
+                <p><strong>Date:</strong> ${new Date(alert.createdAt).toLocaleString()}</p>
+                <p>We urge you to take the necessary precautions and stay safe.</p>
+                <p>Stay safe.</p>
+                <br>
+                <p>Charity App Team</p>
+            `;
+            sendSmtpEmail.sender = { name: "CharityApp", email: "charityapp2025@gmail.com" };
+            sendSmtpEmail.to = [{ email: user.email }];
+
             try {
-                const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-                sendSmtpEmail.subject = `Urgent: Emergency Alert for Your Ward – ${alert.title}`;
-                sendSmtpEmail.htmlContent = emailContent;
-                sendSmtpEmail.sender = { name: "CharityApp", email: "charityapp2025@gmail.com" };
-                sendSmtpEmail.to = [{ email: user.email }];
-                console.log(`Sending email to: ${user.email}`);
-                const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-                console.log("Email Response:", response);
-                if (response && response.messageId) {
-                    console.log(`Email successfully sent to ${user.email} with messageId: ${response.messageId}`);
-                } else {
-                    console.log(`Failed to send email to ${user.email}:`, response);
-                }
+                await apiInstance.sendTransacEmail(sendSmtpEmail);
+                console.log(`✅ Email sent to ${user.email}`);
             } catch (emailError) {
-                console.error(`Error sending email to ${user.email}:`, emailError);
+                console.error(`❌ Error sending email to ${user.email}:`, emailError);
             }
         }
     } catch (error) {
-        console.error("Error in sendEmergencyAlertEmail:", error);
+        console.error("❌ Error in sendEmergencyAlertEmail:", error);
     }
-}
+};
+
+app.get("/getusers/:ward_no", async (req, res) => {
+    try {
+        const wardNo = req.params.ward_no;
+        console.log(`📡 Fetching users in ward ${wardNo}...`);
+
+        const users = await userModel.find({ ward_no: wardNo });
+
+        if (!users.length) {
+            console.log("⚠️ No users found for this ward.");
+            return res.status(404).json({ message: "No users found in this ward." });
+        }
+
+        console.log(`✅ Found ${users.length} users.`);
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("❌ Error fetching users:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+});
+
+app.post("/send-alert", async (req, res) => {
+    console.log("📡 Received request to send an emergency alert!");
+    console.log("📝 Request Body:", req.body);
+
+    const { alert, users, ward_no } = req.body;
+
+    if (!alert || !users || !ward_no) {
+        console.log("⚠️ Missing data in request!");
+        return res.status(400).json({ message: "Missing required data!" });
+    }
+
+    try {
+        console.log(`🔍 Sending emails for alert: ${alert.title}`);
+        console.log(`👥 Users in ward ${ward_no}: ${users.length}`);
+
+        await sendEmergencyAlertEmail(alert, users, ward_no);
+
+        console.log("✅ Emergency alert emails sent successfully.");
+        res.status(200).json({ message: "Alert emails sent successfully!" });
+    } catch (error) {
+        console.error("❌ Error sending alert email:", error);
+        res.status(500).json({ message: "Failed to send alert emails.", error });
+    }
+});
+
+
   
 //-----------------------------------------------------SOCIAL WORKER DASHBOARD------------------------------------------------------------------
  
