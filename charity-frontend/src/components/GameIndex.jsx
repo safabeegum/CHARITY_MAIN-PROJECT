@@ -208,7 +208,7 @@ const GameIndex = () => {
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
             <h3>Payment Required</h3>
-            <p>Pay Rs 2 to play {selectedGame}</p>
+            <p>Pay Rs 10 to play {selectedGame}</p>
 
             {/* UPI Input Field */}
             <input

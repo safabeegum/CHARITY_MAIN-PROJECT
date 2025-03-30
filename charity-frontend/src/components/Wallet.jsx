@@ -33,14 +33,14 @@ const Wallet = () => {
         return;
       }
 
-      setWallets(data);
+      setWallets([data]);  
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching wallets:", error);
+      console.error("Error fetching wallet:", error);
       setError("Failed to fetch wallet data.");
       setLoading(false);
     }
-  };
+};
 
   const claimReward = async (userId) => {
     const upiId = prompt("Enter your UPI ID to claim the reward:");

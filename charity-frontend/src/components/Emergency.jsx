@@ -30,6 +30,8 @@ const Emergency = () => {
   };
 
   const handleAdd = async () => {
+    console.log("Attempting to add an emergency alert...");
+
     if (
       !title.trim() ||
       !description.trim() ||
@@ -42,6 +44,7 @@ const Emergency = () => {
     }
 
     try {
+      console.log("📡 Sending request to /addemergency...");
       const response = await axios.post("http://localhost:3030/addemergency", {
         title,
         description,
@@ -50,21 +53,43 @@ const Emergency = () => {
         ward_no,
       });
 
-      if (response.data.success) {
-        alert("Emergency alert reported and emails sent!");
-      } else {
-        alert("Failed to report the emergency alert.");
-      }
+      console.log("Alert added response:", response.data);
 
-      setTitle("");
-      setDescription("");
-      setLocation("");
-      setAlertType("default");
-      setWardNo("default");
-      fetchAlerts();
+      if (response.data.alert) {
+        alert("Emergency alert reported successfully!");
+        console.log(`👥 Fetching users from ward ${ward_no}...`);
+        const usersResponse = await axios.get(
+          `http://localhost:3030/getusers/${ward_no}`
+        );
+        console.log("🔍 Users found:", usersResponse.data);
+
+        console.log("📩 Sending email notifications...");
+        const emailResponse = await axios.post(
+          "http://localhost:3030/send-alert",
+          {
+            alert: response.data.alert,
+            users: usersResponse.data,
+            ward_no,
+          }
+        );
+
+        console.log("📬 Email response:", emailResponse.data);
+        alert("Emergency alert emails sent successfully!");
+        setTitle("");
+        setDescription("");
+        setLocation("");
+        setAlertType("default");
+        setWardNo("default");
+        fetchAlerts();
+      } else {
+        alert(response.data.message || "Failed to report the emergency alert.");
+      }
     } catch (error) {
-      console.error("Error adding alert:", error);
-      alert("Your alert was flagged as potential spam and was not added!");
+      console.error(
+        "Error adding alert:",
+        error.response ? error.response.data : error
+      );
+      alert("Something went wrong while reporting the emergency!");
     }
   };
 
