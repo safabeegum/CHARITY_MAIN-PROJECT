@@ -131,12 +131,12 @@ const TicTacToe = () => {
             </div>
           ))}
         </div>
-        <button
+        {/* <button
           style={styles.TTTrestart}
           onClick={() => navigate("/gameindex")}
         >
           RESTART
-        </button>
+        </button> */}
       </div>
     </div>
   );

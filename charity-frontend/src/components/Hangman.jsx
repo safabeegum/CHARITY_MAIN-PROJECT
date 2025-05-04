@@ -351,9 +351,9 @@ const Hangman = () => {
 
         {gameOver && (
           <div>
-            <button onClick={restartGame} style={styles.button}>
+            {/* <button onClick={restartGame} style={styles.button}>
               Restart Game
-            </button>
+            </button> */}
           </div>
         )}
       </div>

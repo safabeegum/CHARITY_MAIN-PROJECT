@@ -176,9 +176,9 @@ const GuessTheNumber = () => {
         <br></br>
         <p>{alertMessage}</p>
         <p>Attempts: {scores}</p>
-        <button style={styles.numberBtn} onClick={playAgain}>
+        {/* <button style={styles.numberBtn} onClick={playAgain}>
           Play Again
-        </button>
+        </button> */}
       </div>
 
       {}

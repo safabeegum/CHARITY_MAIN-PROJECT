@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import AdminNavbar from "./AdminNavbar";
 
@@ -28,10 +29,10 @@ const ApprovedPost = () => {
                     <h5 className="card-title">{post.title}</h5>
                     <p className="card-text">NAME: {post.name}</p>
                     <p>
-                      <strong>Required:</strong> ${post.requiredAmount}
+                      <strong>Required:</strong> ₹{post.requiredAmount}
                     </p>
                     <p>
-                      <strong>Collected:</strong> $
+                      <strong>Collected:</strong> ₹
                       {post.currentDonationsReceived}
                     </p>
                     <button className="btn btn-primary">View Details</button>

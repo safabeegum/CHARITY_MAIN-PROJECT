@@ -176,11 +176,11 @@ const SnakeGame = () => {
           )}
         </div>
         {gameOver && <h2 style={styles.loseText}> Game Over! </h2>}
-        {gameOver && (
-          <button style={styles.button} onClick={restartGame}>
-            Restart Game
-          </button>
-        )}
+        {/* {gameOver && (
+          // <button style={styles.button} onClick={restartGame}>
+          //   Restart Game
+          // </button>
+        )} */}
       </div>
     </div>
   );
