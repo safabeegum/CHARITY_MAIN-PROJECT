@@ -760,7 +760,7 @@ async function allocatePendingDonations() {
 }
 
 //Game Rewards
-cron.schedule('20 9 * * *', async () => {
+cron.schedule('25 9 * * *', async () => {
     console.log("Scheduled task triggered: Rewarding top scorers...");
     await addRewardsForTopScorers();
 });
@@ -871,7 +871,7 @@ app.post("/claimreward", async (req, res) => {
   });
 
 // Configure Brevo API Key
-const brevoApiKey = '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';
+const brevoApiKey = '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';
 SibApiV3Sdk.ApiClient.instance.authentications['api-key'].apiKey = brevoApiKey;
 
 // Make Payment 
@@ -1325,10 +1325,10 @@ app.post("/addemergency", async (req, res) => {
 
         const alertText = `${title} ${description} ${location}`.toLowerCase();
         let flaggedCount = flaggedWords.filter(word => alertText.includes(word)).length;
-        console.log(`🚨 Checking for spam: ${flaggedCount} flagged words found.`);
+        console.log(`Checking for spam: ${flaggedCount} flagged words found.`);
 
         if (flaggedCount >= FLAGGED_THRESHOLD) {
-            console.log("❌ Alert flagged as spam! Blocking it...");
+            console.log("Alert flagged as spam! Blocking it...");
             return res.status(403).json({ message: "Your alert was flagged as potential spam and was not added!" });
         }
 
@@ -1342,11 +1342,11 @@ app.post("/addemergency", async (req, res) => {
         });
 
         const savedAlert = await newAlert.save();
-        console.log("✅ Alert saved successfully:", savedAlert);
+        console.log("Alert saved successfully:", savedAlert);
 
         res.status(201).json({ message: "Emergency alert reported!", alert: savedAlert });
     } catch (error) {
-        console.error("❌ Error saving alert:", error);
+        console.error("Error saving alert:", error);
         res.status(500).json({ message: "Server error", error });
     }
 });
@@ -1441,7 +1441,7 @@ const sendEmergencyAlertEmail = async (alert, users, ward_no) => {
 app.get("/getusers/:ward_no", async (req, res) => {
     try {
         const wardNo = req.params.ward_no;
-        console.log(`📡 Fetching users in ward ${wardNo}...`);
+        console.log(`Fetching users in ward ${wardNo}...`);
 
         const users = await userModel.find({ ward_no: wardNo });
 
